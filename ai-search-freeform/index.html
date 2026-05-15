@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ナレカン AI検索 - フリーテキスト追加質問モックアップ</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;line-height:1.6;letter-spacing:0.03em;outline:none}
+html,body{background:#fff;color:#555;font-family:'Noto Sans JP','Helvetica Neue',Arial,'Hiragino Kaku Gothic ProN','Hiragino Sans',Meiryo,sans-serif;min-height:100%;overflow-y:hidden}
+a{color:#337ab7;cursor:pointer;text-decoration:none}
+body{display:flex;justify-content:center;align-items:center;min-height:100vh;background:#444}
+
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10}
+.modal{position:relative;z-index:20;width:1050px;max-width:98vw;height:90vh;background:#fff;border-radius:4px;display:flex;flex-direction:column;box-shadow:0 3px 8px rgba(0,0,0,.25);overflow:hidden}
+.close-btn{position:absolute;top:8px;right:12px;background:none;border:none;color:#999;font-size:22px;cursor:pointer;z-index:5;padding:4px 8px;transition:.15s}
+.close-btn:hover{color:#555}
+
+/* Chat area */
+.chat-body{flex:1;display:flex;flex-direction:column;min-height:0}
+.chat-inner{flex:1;position:relative;overflow-y:auto;min-height:0;padding:40px 40px 16px;scroll-behavior:smooth}
+
+/* Initial view */
+.initial{position:absolute;top:0;bottom:0;left:0;right:0;margin:auto;display:flex;align-items:center;justify-content:center;gap:16px;height:80px}
+.ai-logo{width:72px;height:72px;flex-shrink:0;position:relative}
+.ai-logo .cloud{font-size:50px;color:#4aabb8}
+.ai-logo .ai-text{position:absolute;bottom:-2px;left:50%;transform:translateX(-50%);font-size:13px;font-weight:500;color:#4aabb8}
+.initial .speech-bubble{font-size:1.125rem;padding:16px 24px;background:#f4f4f4;color:#555;border-radius:0 10px 10px;white-space:pre-wrap;width:fit-content}
+
+/* Chat messages */
+.chat-msg{animation:fadeIn .3s ease;margin-bottom:16px}
+.chat-msg.user{display:flex;flex-direction:column;align-items:flex-end}
+.chat-msg.ai{display:flex;flex-direction:column;align-items:flex-start}
+.bubble{padding:12px 16px;white-space:pre-wrap;width:fit-content;max-width:75%;font-size:1rem;color:#555}
+.bubble.main{background:#4aabb8;color:#fff;border-radius:10px;border-top-right-radius:0}
+.bubble.sub{background:#f4f4f4;color:#555;border-radius:0 10px 10px}
+
+.chat-label{font-size:0.625rem;color:#ababab;margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.chat-label .ai-icon-sm{width:28px;height:28px;position:relative;display:inline-flex;align-items:center;justify-content:center}
+.chat-label .ai-icon-sm .cloud{font-size:22px;color:#4aabb8}
+.chat-label .ai-icon-sm .ai-t{position:absolute;bottom:-1px;left:50%;transform:translateX(-50%);font-size:7px;font-weight:500;color:#4aabb8}
+
+/* References */
+.ref-box{margin-top:8px;max-width:75%}
+.ref-note{font-size:0.875rem;color:#555;margin-bottom:6px}
+.ref-box a{display:block;font-size:0.875rem;color:#337ab7;padding:2px 0}
+.ref-box a:hover{text-decoration:underline}
+
+/* Typing */
+.typing-dots{display:inline-flex;gap:5px;padding:14px 18px}
+.typing-dots span{width:8px;height:8px;border-radius:50%;background:#ababab;animation:bounce .6s infinite alternate}
+.typing-dots span:nth-child(2){animation-delay:.2s}
+.typing-dots span:nth-child(3){animation-delay:.4s}
+
+/* ===== Suggested follow-up chips ===== */
+.suggestions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;margin-bottom:8px;animation:fadeIn .4s ease}
+.suggestion-chip{background:#fff;border:1px solid #4aabb8;color:#4aabb8;padding:6px 14px;border-radius:20px;font-size:0.8125rem;cursor:pointer;font-family:inherit;transition:.15s;line-height:1.4}
+.suggestion-chip:hover{background:#4aabb8;color:#fff}
+
+/* ===== Session indicator bar ===== */
+.session-bar{display:none;align-items:center;justify-content:space-between;padding:6px 40px;font-size:0.75rem;color:#777;border-top:1px solid #f0f0f0;background:#fafafa;flex-shrink:0}
+.session-bar.visible{display:flex}
+.turn-info{display:flex;align-items:center;gap:8px}
+.turn-pills{display:flex;gap:3px}
+.turn-pill{width:16px;height:4px;border-radius:2px;background:#e0e0e0;transition:.3s}
+.turn-pill.active{background:#4aabb8}
+.turn-pill.used{background:#b8dce2}
+.turn-text{color:#777;font-size:0.75rem}
+.new-topic-btn{background:none;border:1px solid #e0e0e0;color:#555;padding:3px 12px;border-radius:4px;font-size:0.75rem;cursor:pointer;font-family:inherit;transition:.15s;display:flex;align-items:center;gap:4px}
+.new-topic-btn:hover{background:#f4f4f4;border-color:#999}
+
+/* ===== Max turns reached ===== */
+.max-turns-msg{animation:fadeIn .4s ease;margin-bottom:16px;display:flex;flex-direction:column;align-items:center;text-align:center}
+.max-turns-bubble{background:#fff3cd;color:#856404;border:1px solid #ffeeba;border-radius:10px;padding:14px 24px;font-size:0.875rem;max-width:80%}
+.max-turns-actions{display:flex;gap:12px;margin-top:12px}
+.max-turns-actions button{padding:8px 20px;border-radius:4px;font-size:0.875rem;cursor:pointer;font-family:inherit;transition:.15s}
+.btn-new-topic{background:#4aabb8;color:#fff;border:none}
+.btn-new-topic:hover{background:#3d9aa6}
+.btn-close{background:#fff;color:#555;border:1px solid #e0e0e0}
+.btn-close:hover{background:#f4f4f4}
+
+/* Bottom area */
+.bottom-area{padding:0 12px 12px;flex-shrink:0}
+.filter-row{display:flex;flex-direction:column;align-items:flex-end;gap:2px;margin-bottom:6px;padding:0 28px}
+.filter-check{display:flex;align-items:center;gap:6px;font-size:0.75rem;color:#555;cursor:pointer}
+.filter-check input[type="checkbox"]{width:14px;height:14px;accent-color:#4aabb8;cursor:pointer}
+
+.question-input-container{background:#4aabb8;border-radius:4px;padding:8px 24px;position:relative;transition:opacity .3s}
+.question-input-container.disabled{opacity:.5;pointer-events:none}
+.remaining-count{text-align:right;color:#fff;font-size:0.875rem;margin-bottom:4px;display:none}
+.remaining-count.visible{display:block}
+
+.input-wrapper{background:#fff;border-radius:20px;display:flex;align-items:flex-end;padding:4px 12px;margin:8px 0}
+.input-wrapper textarea{border:none;flex:1;resize:none;font-size:1rem;font-family:inherit;outline:none;min-height:36px;max-height:160px;padding:8px 4px;color:#555;line-height:1.6;letter-spacing:0.03em}
+.input-wrapper textarea::placeholder{color:#ababab}
+.submit-btn{background:#f4f4f4;border:none;border-radius:50%;color:#4aabb8;font-size:1.1rem;padding:0;cursor:pointer;width:34px;height:34px;display:flex;align-items:center;justify-content:center;transition:.15s;flex-shrink:0;margin-bottom:4px}
+.submit-btn:hover{background:#e7e7e7}
+.submit-btn:disabled{opacity:.5;cursor:default}
+
+.note{text-align:right;font-size:0.625rem;color:#ababab;padding:0 40px 8px}
+
+/* Scrollbar */
+.chat-inner::-webkit-scrollbar{width:9px}
+.chat-inner::-webkit-scrollbar-thumb{border-width:0 1px;border-style:solid;border-color:transparent;border-radius:20px;background-color:#999;background-clip:padding-box}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes bounce{to{transform:translateY(-6px);opacity:.4}}
+</style>
+</head>
+<body>
+
+<div class="overlay"></div>
+<div class="modal">
+  <button class="close-btn"><i class="fa-solid fa-xmark"></i></button>
+
+  <div class="chat-body">
+    <div class="chat-inner" id="chatArea">
+      <div class="initial" id="initialView">
+        <div class="ai-logo">
+          <i class="fa-solid fa-cloud cloud"></i>
+          <span class="ai-text">AI</span>
+        </div>
+        <div class="speech-bubble">今日はどんなご用ですか？</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Session indicator -->
+  <div class="session-bar" id="sessionBar">
+    <div class="turn-info">
+      <div class="turn-pills" id="turnPills">
+        <div class="turn-pill"></div><div class="turn-pill"></div><div class="turn-pill"></div><div class="turn-pill"></div><div class="turn-pill"></div>
+      </div>
+      <span class="turn-text" id="turnText">ターン 0/5</span>
+    </div>
+    <button class="new-topic-btn" onclick="resetSession()">
+      <i class="fa-solid fa-rotate-right" style="font-size:10px"></i>
+      新しい話題を始める
+    </button>
+  </div>
+
+  <div class="bottom-area" id="bottomArea">
+    <div class="filter-row">
+      <label class="filter-check"><input type="checkbox"> 検索対象の「フォルダ（記事）」を絞り込む</label>
+      <label class="filter-check"><input type="checkbox"> 検索対象の「カテゴリ（質問）」を絞り込む</label>
+    </div>
+    <div class="question-input-container" id="inputContainer">
+      <div class="remaining-count" id="remainingText">検索可能回数：残り48回（月初めにリセット）</div>
+      <div class="input-wrapper">
+        <textarea id="questionInput" rows="1" placeholder="例）社内システムから、有給申請する方法を教えてください" oninput="autoResize(this);updateSendBtn()"></textarea>
+        <button class="submit-btn" id="sendBtn" disabled onclick="handleSend()">
+          <i class="fa-solid fa-arrow-up"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+  <div class="note">ナレカンAIの回答が、必ずしも正しいとは限りません。参照元の情報もご確認ください。</div>
+</div>
+
+<script>
+const chatArea=document.getElementById('chatArea'),input=document.getElementById('questionInput'),sendBtn=document.getElementById('sendBtn'),sessionBar=document.getElementById('sessionBar'),turnText=document.getElementById('turnText'),inputContainer=document.getElementById('inputContainer');
+let turn=0,remaining=48,isSearching=false;
+const MAX_TURNS=5;
+
+/* ===== 5ターン分のシナリオデータ ===== */
+const scenario=[
+  {
+    userQ:"有給申請の方法を教えてください",
+    answer:"有給休暇の申請方法についてご説明します。\n\n1. 社内ポータルサイト「勤怠管理」にログインします\n2. 左メニューの「休暇申請」をクリックします\n3. 「新規申請」ボタンを押し、取得希望日を選択します\n4. 休暇種別で「年次有給休暇」を選び、理由を入力します\n5. 承認者（直属の上長）を確認し、「申請」を押してください\n\n申請後、上長にメール通知が届き、承認されるとステータスが「承認済」に変わります。",
+    refs:["有給休暇申請マニュアル","勤怠管理システム利用ガイド"],
+    suggestions:["申請は何日前までにすればいいですか？","半日有給も取れますか？","有給の残日数を確認したいです"]
+  },
+  {
+    userQ:"申請は何日前までにすればいいですか？",
+    answer:"有給休暇の申請期限についてお答えします。\n\n■ 通常の有給申請\n原則として、取得希望日の3営業日前までに申請してください。\n\n■ 急な体調不良等の場合\n当日の始業時間前までに、上長へ電話またはチャットで連絡のうえ、事後申請が可能です。ただし、事後申請は取得日から3営業日以内に完了する必要があります。\n\n■ 連続取得（3日以上）の場合\n1週間前までの申請が推奨されています。繁忙期（3月・9月・12月）は2週間前までにご相談ください。",
+    refs:["就業規則 第23条","有給休暇取得ルール（2024年改訂版）"],
+    suggestions:["上司が不在の場合はどうすればいいですか？","有給の残日数はどこで確認できますか？","事後申請の手順を詳しく教えてください"]
+  },
+  {
+    userQ:"上司が不在の場合はどうすればいいですか？",
+    answer:"上司が不在の場合の対応方法をご説明します。\n\n■ システム上の代理承認\n直属の上長が不在（出張・休暇等）の場合、システムが自動的に代理承認者に通知を送ります。代理承認者は、部門設定画面であらかじめ登録されています。\n\n■ 代理承認者の確認方法\n「勤怠管理」→「組織設定」→「承認ルート」から確認できます。\n\n■ 代理承認者も不在の場合\n人事部（内線: 1234）に直接ご連絡ください。人事部長が緊急承認を行うことが可能です。\n\n■ 注意点\n代理承認の場合でも、申請内容や期限に変更はありません。通常どおり申請してください。",
+    refs:["承認フロー設定マニュアル","人事部 緊急連絡先一覧"],
+    suggestions:["半日有給も申請できますか？","有給の残日数を確認する方法は？","申請をキャンセルしたい場合はどうすれば？"]
+  },
+  {
+    userQ:"半日有給も申請できますか？",
+    answer:"はい、半日有給（半休）も申請可能です。\n\n■ 半日有給の種類\n• 午前半休：始業〜12:00 まで休暇、13:00 から出社\n• 午後半休：午前中は通常勤務、12:00 以降休暇\n\n■ 申請方法\n通常の有給申請と同じ手順で、休暇種別の選択時に「午前半休」または「午後半休」を選択してください。\n\n■ 有給消化の計算\n半日有給は 0.5日 としてカウントされます。\n\n■ 利用上限\n半日有給の利用回数に上限はありませんが、同日に午前半休と午後半休を別々に申請することはできません（その場合は1日有給として申請してください）。",
+    refs:["就業規則 第23条の2","半日有給制度FAQ"],
+    suggestions:["有給の残日数はどこで確認できますか？","時間単位の有給はありますか？","有給が足りない場合はどうなりますか？"]
+  },
+  {
+    userQ:"有給の残日数はどこで確認できますか？",
+    answer:"有給休暇の残日数は、以下の方法で確認できます。\n\n■ 方法1：勤怠管理システムで確認\n「勤怠管理」→「マイページ」→「有給残日数」に表示されています。繰越分と今年度付与分の内訳も確認できます。\n\n■ 方法2：給与明細で確認\n毎月の給与明細書の下部に、当月末時点の有給残日数が記載されています。\n\n■ 方法3：人事部に問い合わせ\n人事部（内線: 1234）でも残日数をお伝えできます。\n\n■ 有給付与のタイミング\n毎年4月1日に年次有給休暇が付与されます。前年度からの繰越は最大20日までです。\n\n■ 注意\n有給休暇の有効期限は付与日から2年間です。期限切れにご注意ください。",
+    refs:["勤怠管理システム操作ガイド","有給休暇付与・繰越ルール"],
+    suggestions:[]
+  }
+];
+
+function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,160)+'px'}
+function updateSendBtn(){const t=input.value.replace(/\s/g,'');sendBtn.disabled=t.length<5||isSearching}
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function scrollToBottom(){chatArea.scrollTop=chatArea.scrollHeight}
+
+function updateTurnUI(){
+  const pills=document.querySelectorAll('.turn-pill');
+  pills.forEach((p,i)=>{
+    p.className='turn-pill';
+    if(i<turn-1) p.classList.add('used');
+    else if(i===turn-1) p.classList.add('active');
+  });
+  turnText.textContent='ターン '+turn+'/'+MAX_TURNS;
+  if(turn>=1) sessionBar.classList.add('visible');
+}
+
+function addMsg(type,text,refs){
+  document.getElementById('initialView')?.remove();
+  const d=document.createElement('div');d.className='chat-msg '+type;
+  let html='';
+  if(type==='user'){
+    html+='<div class="bubble main">'+escHtml(text)+'</div>';
+  }else{
+    html+='<div class="chat-label"><span class="ai-icon-sm"><i class="fa-solid fa-cloud cloud"></i><span class="ai-t">AI</span></span></div>';
+    html+='<div class="bubble sub">'+escHtml(text)+'</div>';
+    if(refs&&refs.length){
+      html+='<div class="ref-box"><div class="ref-note">こちらの回答は下記のナレッジを参考にしています。</div>';
+      refs.forEach(r=>html+='<a href="#">📄 '+escHtml(r)+'</a>');
+      html+='</div>';
+    }
+  }
+  d.innerHTML=html;chatArea.appendChild(d);scrollToBottom();return d;
+}
+
+function addSuggestions(chips){
+  removeSuggestions();
+  if(!chips||!chips.length)return;
+  const d=document.createElement('div');d.className='suggestions';d.id='suggestionsArea';
+  chips.forEach(text=>{
+    const btn=document.createElement('button');
+    btn.className='suggestion-chip';
+    btn.textContent=text;
+    btn.onclick=()=>{input.value=text;autoResize(input);updateSendBtn();handleSend()};
+    d.appendChild(btn);
+  });
+  chatArea.appendChild(d);scrollToBottom();
+}
+function removeSuggestions(){document.getElementById('suggestionsArea')?.remove()}
+
+function addTyping(){
+  removeSuggestions();
+  const d=document.createElement('div');d.className='chat-msg ai';d.id='typingIndicator';
+  d.innerHTML='<div class="chat-label"><span class="ai-icon-sm"><i class="fa-solid fa-cloud cloud"></i><span class="ai-t">AI</span></span></div><div class="bubble sub"><div class="typing-dots"><span></span><span></span><span></span></div></div>';
+  chatArea.appendChild(d);scrollToBottom();
+}
+function removeTyping(){document.getElementById('typingIndicator')?.remove()}
+
+function addMaxTurnsMsg(){
+  const d=document.createElement('div');d.className='max-turns-msg';
+  d.innerHTML='<div class="max-turns-bubble"><i class="fa-solid fa-circle-info" style="margin-right:6px"></i>このトピックの会話上限（'+MAX_TURNS+'ターン）に達しました。<br>新しい話題で検索を続けるか、検索を終了してください。</div><div class="max-turns-actions"><button class="btn-new-topic" onclick="resetSession()"><i class="fa-solid fa-rotate-right" style="margin-right:4px"></i>新しい話題で検索</button><button class="btn-close" onclick="alert(\'モーダルを閉じます（モックアップ）\')">検索を終了する</button></div>';
+  chatArea.appendChild(d);scrollToBottom();
+  inputContainer.classList.add('disabled');
+}
+
+async function streamText(el,text){
+  const bubble=el.querySelector('.bubble.sub');if(!bubble)return;
+  bubble.textContent='';
+  for(let i=0;i<text.length;i++){
+    bubble.textContent+=text[i];scrollToBottom();
+    await new Promise(r=>setTimeout(r,10+Math.random()*6));
+  }
+}
+
+async function handleSend(){
+  if(isSearching||turn>=MAX_TURNS)return;
+  const q=input.value.trim();if(q.replace(/\s/g,'').length<5)return;
+  isSearching=true;updateSendBtn();
+  removeSuggestions();
+  addMsg('user',q);
+  input.value='';input.style.height='auto';
+
+  addTyping();
+  const s=scenario[turn]||scenario[scenario.length-1];
+
+  await new Promise(r=>setTimeout(r,800+Math.random()*600));
+  removeTyping();
+
+  const aiMsg=addMsg('ai','',s.refs);
+  await streamText(aiMsg,s.answer);
+
+  turn++;remaining--;
+  document.getElementById('remainingText').textContent='検索可能回数：残り'+remaining+'回（月初めにリセット）';
+  document.getElementById('remainingText').classList.add('visible');
+  updateTurnUI();
+
+  if(turn>=MAX_TURNS){
+    addMaxTurnsMsg();
+    isSearching=false;updateSendBtn();
+    return;
+  }
+
+  input.placeholder='追加で質問する...（会話の文脈を引き継ぎます）';
+  isSearching=false;updateSendBtn();input.focus();
+
+  // Show suggestions after a short delay
+  setTimeout(()=>{addSuggestions(s.suggestions);},300);
+}
+
+function resetSession(){
+  turn=0;updateTurnUI();
+  sessionBar.classList.remove('visible');
+  document.getElementById('remainingText').classList.remove('visible');
+  inputContainer.classList.remove('disabled');
+  chatArea.innerHTML='<div class="initial" id="initialView"><div class="ai-logo"><i class="fa-solid fa-cloud cloud"></i><span class="ai-text">AI</span></div><div class="speech-bubble">今日はどんなご用ですか？</div></div>';
+  input.placeholder='例）社内システムから、有給申請する方法を教えてください';
+  input.value='';input.style.height='auto';updateSendBtn();input.focus();
+}
+
+input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();handleSend()}});
+
+/* ===== Demo auto-play: pre-fill first question ===== */
+window.addEventListener('load',()=>{
+  setTimeout(()=>{
+    input.value=scenario[0].userQ;
+    autoResize(input);
+    updateSendBtn();
+  },800);
+});
+</script>
+</body>
+</html>
