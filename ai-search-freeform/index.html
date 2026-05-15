@@ -315,7 +315,13 @@ function resetSession(){
   input.value='';input.style.height='auto';updateSendBtn();input.focus();
 }
 
-input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();handleSend()}});
+input.addEventListener('keydown',e=>{
+  // IME変換中は無視
+  if(e.isComposing||e.keyCode===229)return;
+  // Ctrl+Enter で送信（現行ナレカンと同じ）
+  if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();handleSend()}
+  // Enter のみ → 改行（デフォルト動作のまま）
+});
 
 /* ===== Demo auto-play: pre-fill first question ===== */
 window.addEventListener('load',()=>{
