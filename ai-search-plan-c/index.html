@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ナレカン AI検索 - C案：言い換え＋登録促進モックアップ</title>
+<title>ナレカン AI検索 - C案：言い換え＋知恵袋連携モックアップ</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <style>
@@ -49,10 +49,10 @@ body{display:flex;justify-content:center;align-items:center;min-height:100vh;bac
 .no-answer-rephrase{background:#f0f9fa;border:1px solid #d4ecef;border-radius:8px;padding:14px 18px;margin-bottom:10px}
 .no-answer-rephrase .label{font-size:.8125rem;color:#4aabb8;font-weight:500;margin-bottom:8px;display:flex;align-items:center;gap:6px}
 .no-answer-rephrase .chips{display:flex;flex-wrap:wrap;gap:8px}
-.no-answer-register{background:#fdf8ee;border:1px solid #f5e6c4;border-radius:8px;padding:14px 18px}
-.no-answer-register .label{font-size:.8125rem;color:#b8860b;font-weight:500;margin-bottom:6px;display:flex;align-items:center;gap:6px}
-.no-answer-register .register-link{display:inline-flex;align-items:center;gap:6px;font-size:.875rem;color:#337ab7;cursor:pointer;padding:4px 0}
-.no-answer-register .register-link:hover{text-decoration:underline}
+.no-answer-chiebukuro{background:#f3f0fa;border:1px solid #d9d0ef;border-radius:8px;padding:14px 18px}
+.no-answer-chiebukuro .label{font-size:.8125rem;color:#7b5ea7;font-weight:500;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.no-answer-chiebukuro .chiebukuro-link{display:inline-flex;align-items:center;gap:6px;font-size:.875rem;color:#337ab7;cursor:pointer;padding:4px 0}
+.no-answer-chiebukuro .chiebukuro-link:hover{text-decoration:underline}
 /* Session bar */
 .session-bar{display:none;align-items:center;justify-content:space-between;padding:6px 40px;font-size:.75rem;color:#777;border-top:1px solid #f0f0f0;background:#fafafa;flex-shrink:0}
 .session-bar.visible{display:flex}
@@ -142,7 +142,7 @@ const scenario=[
     answer:"検索しましたが、ナレカンに記載されているナレッジの中には、該当する情報が見つかりませんでした😢",
     intent:"F1A車載機の道路区分確定に関する情報を探している",
     suggestions:["F1A車載機の道路区分設定手順","F1A車載機の操作マニュアル","車載機の道路区分切替方法"],
-    articleTitle:"F1A車載機の道路区分確定手順と注意点",
+    questionTitle:"F1A車載機の道路区分確定時間について",
     refs:[]
   },
   { /* ターン2: 言い換え案クリックで今度はHIT! */
@@ -165,7 +165,7 @@ const scenario=[
     answer:"検索しましたが、ナレカンに記載されているナレッジの中には、該当する情報が見つかりませんでした😢",
     intent:"社内の配送手段の使い分けについて知りたい",
     suggestions:["こねこ便で送れるもの","社内配送サービスの種類","宅配サービスの利用手順"],
-    articleTitle:"社内の配送サービス活用ガイド",
+    questionTitle:"こねこ便と郵便の使い分けについて",
     refs:[]
   },
   { /* ターン5: 言い換えクリックでHIT */
@@ -210,8 +210,8 @@ function addNoAnswerPanel(s){
   let h='<div class="no-answer-rephrase"><div class="label"><i class="fa-solid fa-lightbulb"></i> 別のキーワードで試してみませんか？</div><div class="chips">';
   s.suggestions.forEach(t=>{h+='<button class="suggestion-chip" onclick="clickSuggestion(this)">'+escHtml(t)+'</button>'});
   h+='</div></div>';
-  h+='<div class="no-answer-register"><div class="label"><i class="fa-solid fa-pen-to-square"></i> このトピックのナレッジを登録しませんか？</div>';
-  h+='<a class="register-link" onclick="alert(\'記事作成画面を開きます（モックアップ）\')"><i class="fa-solid fa-plus-circle"></i>「'+escHtml(s.articleTitle)+'」として新規作成</a></div>';
+  h+='<div class="no-answer-chiebukuro"><div class="label"><i class="fa-solid fa-circle-question"></i> 社内知恵袋で質問してみませんか？</div>';
+  h+='<a class="chiebukuro-link" onclick="alert(\'社内知恵袋の質問作成画面を開きます（モックアップ）\n\nタイトル: '+escHtml(s.questionTitle).replace(/'/g,'\\\'')+'\')"><i class="fa-solid fa-arrow-up-right-from-square"></i>「'+escHtml(s.questionTitle)+'」について質問する</a></div>';
   d.innerHTML=h;chatArea.appendChild(d);scrollToBottom();
 }
 function clickSuggestion(el){input.value=el.textContent;autoResize(input);updateSendBtn();handleSend()}
