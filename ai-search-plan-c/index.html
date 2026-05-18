@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ナレカン AI検索 - C案：言い換え＋登録促進モックアップ</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;line-height:1.6;letter-spacing:.03em;outline:none}
+html,body{background:#fff;color:#555;font-family:'Noto Sans JP','Helvetica Neue',Arial,'Hiragino Kaku Gothic ProN','Hiragino Sans',Meiryo,sans-serif;min-height:100%;overflow-y:hidden}
+a{color:#337ab7;cursor:pointer;text-decoration:none}
+body{display:flex;justify-content:center;align-items:center;min-height:100vh;background:#444}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10}
+.modal{position:relative;z-index:20;width:1050px;max-width:98vw;height:90vh;background:#fff;border-radius:4px;display:flex;flex-direction:column;box-shadow:0 3px 8px rgba(0,0,0,.25);overflow:hidden}
+.close-btn{position:absolute;top:8px;right:12px;background:none;border:none;color:#999;font-size:22px;cursor:pointer;z-index:5;padding:4px 8px;transition:.15s}
+.close-btn:hover{color:#555}
+.chat-body{flex:1;display:flex;flex-direction:column;min-height:0}
+.chat-inner{flex:1;position:relative;overflow-y:auto;min-height:0;padding:40px 40px 16px;scroll-behavior:smooth}
+.initial{position:absolute;top:0;bottom:0;left:0;right:0;margin:auto;display:flex;align-items:center;justify-content:center;gap:16px;height:80px}
+.ai-logo{width:72px;height:72px;flex-shrink:0;position:relative}
+.ai-logo .cloud{font-size:50px;color:#4aabb8}
+.ai-logo .ai-text{position:absolute;bottom:-2px;left:50%;transform:translateX(-50%);font-size:13px;font-weight:500;color:#4aabb8}
+.initial .speech-bubble{font-size:1.125rem;padding:16px 24px;background:#f4f4f4;color:#555;border-radius:0 10px 10px;white-space:pre-wrap;width:fit-content}
+.chat-msg{animation:fadeIn .3s ease;margin-bottom:16px}
+.chat-msg.user{display:flex;flex-direction:column;align-items:flex-end}
+.chat-msg.ai{display:flex;flex-direction:column;align-items:flex-start}
+.bubble{padding:12px 16px;white-space:pre-wrap;width:fit-content;max-width:75%;font-size:1rem;color:#555}
+.bubble.main{background:#4aabb8;color:#fff;border-radius:10px;border-top-right-radius:0}
+.bubble.sub{background:#f4f4f4;color:#555;border-radius:0 10px 10px}
+.chat-label{font-size:.625rem;color:#ababab;margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.chat-label .ai-icon-sm{width:28px;height:28px;position:relative;display:inline-flex;align-items:center;justify-content:center}
+.chat-label .ai-icon-sm .cloud{font-size:22px;color:#4aabb8}
+.chat-label .ai-icon-sm .ai-t{position:absolute;bottom:-1px;left:50%;transform:translateX(-50%);font-size:7px;font-weight:500;color:#4aabb8}
+.ref-box{margin-top:8px;max-width:75%}
+.ref-note{font-size:.875rem;color:#555;margin-bottom:6px}
+.ref-box a{display:block;font-size:.875rem;color:#337ab7;padding:2px 0}
+.ref-box a:hover{text-decoration:underline}
+.typing-dots{display:inline-flex;gap:5px;padding:14px 18px}
+.typing-dots span{width:8px;height:8px;border-radius:50%;background:#ababab;animation:bounce .6s infinite alternate}
+.typing-dots span:nth-child(2){animation-delay:.2s}
+.typing-dots span:nth-child(3){animation-delay:.4s}
+/* Suggestion chips */
+.suggestions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;margin-bottom:8px;animation:fadeIn .4s ease}
+.suggestion-chip{background:#fff;border:1px solid #4aabb8;color:#4aabb8;padding:6px 14px;border-radius:20px;font-size:.8125rem;cursor:pointer;font-family:inherit;transition:.15s;line-height:1.4}
+.suggestion-chip:hover{background:#4aabb8;color:#fff}
+/* === C案: 回答なし時の案内パネル === */
+.no-answer-panel{animation:fadeIn .4s ease;margin-top:12px;margin-bottom:8px;max-width:75%}
+.no-answer-rephrase{background:#f0f9fa;border:1px solid #d4ecef;border-radius:8px;padding:14px 18px;margin-bottom:10px}
+.no-answer-rephrase .label{font-size:.8125rem;color:#4aabb8;font-weight:500;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.no-answer-rephrase .chips{display:flex;flex-wrap:wrap;gap:8px}
+.no-answer-register{background:#fdf8ee;border:1px solid #f5e6c4;border-radius:8px;padding:14px 18px}
+.no-answer-register .label{font-size:.8125rem;color:#b8860b;font-weight:500;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.no-answer-register .register-link{display:inline-flex;align-items:center;gap:6px;font-size:.875rem;color:#337ab7;cursor:pointer;padding:4px 0}
+.no-answer-register .register-link:hover{text-decoration:underline}
+/* Session bar */
+.session-bar{display:none;align-items:center;justify-content:space-between;padding:6px 40px;font-size:.75rem;color:#777;border-top:1px solid #f0f0f0;background:#fafafa;flex-shrink:0}
+.session-bar.visible{display:flex}
+.turn-info{display:flex;align-items:center;gap:8px}
+.turn-pills{display:flex;gap:3px}
+.turn-pill{width:16px;height:4px;border-radius:2px;background:#e0e0e0;transition:.3s}
+.turn-pill.active{background:#4aabb8}
+.turn-pill.used{background:#b8dce2}
+.turn-text{color:#777;font-size:.75rem}
+.new-topic-btn{background:none;border:1px solid #e0e0e0;color:#555;padding:3px 12px;border-radius:4px;font-size:.75rem;cursor:pointer;font-family:inherit;transition:.15s;display:flex;align-items:center;gap:4px}
+.new-topic-btn:hover{background:#f4f4f4;border-color:#999}
+/* Max turns */
+.max-turns-msg{animation:fadeIn .4s ease;margin-bottom:16px;display:flex;flex-direction:column;align-items:center;text-align:center}
+.max-turns-bubble{background:#fff3cd;color:#856404;border:1px solid #ffeeba;border-radius:10px;padding:14px 24px;font-size:.875rem;max-width:80%}
+.max-turns-actions{display:flex;gap:12px;margin-top:12px}
+.max-turns-actions button{padding:8px 20px;border-radius:4px;font-size:.875rem;cursor:pointer;font-family:inherit;transition:.15s}
+.btn-new-topic{background:#4aabb8;color:#fff;border:none}
+.btn-new-topic:hover{background:#3d9aa6}
+.btn-close{background:#fff;color:#555;border:1px solid #e0e0e0}
+.btn-close:hover{background:#f4f4f4}
+/* Bottom */
+.bottom-area{padding:0 12px 12px;flex-shrink:0}
+.filter-row{display:flex;flex-direction:column;align-items:flex-end;gap:2px;margin-bottom:6px;padding:0 28px}
+.filter-check{display:flex;align-items:center;gap:6px;font-size:.75rem;color:#555;cursor:pointer}
+.filter-check input[type="checkbox"]{width:14px;height:14px;accent-color:#4aabb8;cursor:pointer}
+.question-input-container{background:#4aabb8;border-radius:4px;padding:8px 24px;position:relative;transition:opacity .3s}
+.question-input-container.disabled{opacity:.5;pointer-events:none}
+.remaining-count{text-align:right;color:#fff;font-size:.875rem;margin-bottom:4px;display:none}
+.remaining-count.visible{display:block}
+.input-wrapper{background:#fff;border-radius:20px;display:flex;align-items:flex-end;padding:4px 12px;margin:8px 0}
+.input-wrapper textarea{border:none;flex:1;resize:none;font-size:1rem;font-family:inherit;outline:none;min-height:36px;max-height:160px;padding:8px 4px;color:#555;line-height:1.6;letter-spacing:.03em}
+.input-wrapper textarea::placeholder{color:#ababab}
+.submit-btn{background:#f4f4f4;border:none;border-radius:50%;color:#4aabb8;font-size:1.1rem;padding:0;cursor:pointer;width:34px;height:34px;display:flex;align-items:center;justify-content:center;transition:.15s;flex-shrink:0;margin-bottom:4px}
+.submit-btn:hover{background:#e7e7e7}
+.submit-btn:disabled{opacity:.5;cursor:default}
+.note{text-align:right;font-size:.625rem;color:#ababab;padding:0 40px 8px}
+.chat-inner::-webkit-scrollbar{width:9px}
+.chat-inner::-webkit-scrollbar-thumb{border-width:0 1px;border-style:solid;border-color:transparent;border-radius:20px;background-color:#999;background-clip:padding-box}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes bounce{to{transform:translateY(-6px);opacity:.4}}
+</style>
+</head>
+<body>
+<div class="overlay"></div>
+<div class="modal">
+  <button class="close-btn"><i class="fa-solid fa-xmark"></i></button>
+  <div class="chat-body">
+    <div class="chat-inner" id="chatArea">
+      <div class="initial" id="initialView">
+        <div class="ai-logo"><i class="fa-solid fa-cloud cloud"></i><span class="ai-text">AI</span></div>
+        <div class="speech-bubble">今日はどんなご用ですか？</div>
+      </div>
+    </div>
+  </div>
+  <div class="session-bar" id="sessionBar">
+    <div class="turn-info">
+      <div class="turn-pills" id="turnPills"><div class="turn-pill"></div><div class="turn-pill"></div><div class="turn-pill"></div><div class="turn-pill"></div><div class="turn-pill"></div></div>
+      <span class="turn-text" id="turnText">ターン 0/5</span>
+    </div>
+    <button class="new-topic-btn" onclick="resetSession()"><i class="fa-solid fa-rotate-right" style="font-size:10px"></i> 新しい話題を始める</button>
+  </div>
+  <div class="bottom-area">
+    <div class="filter-row">
+      <label class="filter-check"><input type="checkbox"> 検索対象の「フォルダ（記事）」を絞り込む</label>
+      <label class="filter-check"><input type="checkbox"> 検索対象の「カテゴリ（質問）」を絞り込む</label>
+    </div>
+    <div class="question-input-container" id="inputContainer">
+      <div class="remaining-count" id="remainingText">検索可能回数：残り48回（月初めにリセット）</div>
+      <div class="input-wrapper">
+        <textarea id="questionInput" rows="1" placeholder="例）社内システムから、有給申請する方法を教えてください" oninput="autoResize(this);updateSendBtn()"></textarea>
+        <button class="submit-btn" id="sendBtn" disabled onclick="handleSend()"><i class="fa-solid fa-arrow-up"></i></button>
+      </div>
+    </div>
+  </div>
+  <div class="note">ナレカンAIの回答が、必ずしも正しいとは限りません。参照元の情報もご確認ください。</div>
+</div>
+<script>
+const chatArea=document.getElementById('chatArea'),input=document.getElementById('questionInput'),sendBtn=document.getElementById('sendBtn'),sessionBar=document.getElementById('sessionBar'),turnText=document.getElementById('turnText'),inputContainer=document.getElementById('inputContainer');
+let turn=0,remaining=48,isSearching=false;
+const MAX_TURNS=5;
+
+/* ===== シナリオ: 回答なし→言い換えでHIT を体験 ===== */
+const scenario=[
+  { /* ターン1: 回答なし → C案UI表示 */
+    userQ:"F1A車載機の道路区分確定時間について教えて",
+    noAnswer:true,
+    answer:"検索しましたが、ナレカンに記載されているナレッジの中には、該当する情報が見つかりませんでした😢",
+    intent:"F1A車載機の道路区分確定に関する情報を探している",
+    suggestions:["F1A車載機の道路区分設定手順","F1A車載機の操作マニュアル","車載機の道路区分切替方法"],
+    articleTitle:"F1A車載機の道路区分確定手順と注意点",
+    refs:[]
+  },
+  { /* ターン2: 言い換え案クリックで今度はHIT! */
+    userQ:"F1A車載機の道路区分設定手順",
+    noAnswer:false,
+    answer:"F1A車載機の道路区分は、「道路・運行」ボタンを短押しすることで切り替えることができます。ボタンを押すたびに、以下の順序で道路区分が変更されます：\n\n1. 一般道\n2. 市街地\n3. 高速道\n4. 有料道\n\n道路区分が変更されると、音声案内とボタンの色で確認できます。\n※ 確定までの時間は設定画面から変更可能です（デフォルト: 5秒）。",
+    suggestions:["道路区分の確定時間を変更するには？","F1A車載機のボタン操作一覧は？","音声案内の設定方法は？"],
+    refs:["DTS-F1A操作マニュアル","車載機設定ガイド"]
+  },
+  { /* ターン3: 深掘り */
+    userQ:"道路区分の確定時間を変更するには？",
+    noAnswer:false,
+    answer:"道路区分の確定時間は、以下の手順で変更できます：\n\n1. メニューボタンを長押しして設定画面を開く\n2.「道路区分設定」を選択\n3.「確定時間」の項目で秒数を変更（1秒〜30秒）\n4. 決定ボタンを押して保存\n\n推奨設定：\n• 市街地走行が多い場合 → 3秒\n• 高速道路が多い場合 → 5秒（デフォルト）\n• 山間部など道路が頻繁に変わる場合 → 10秒",
+    suggestions:["設定の初期化方法は？","他の設定項目にはどんなものがある？","道路区分が正しく認識されない場合は？"],
+    refs:["DTS-F1A操作マニュアル 第5章"]
+  },
+  { /* ターン4: 回答なし → C案UI再表示 */
+    userQ:"こねこ便と郵便の使い分けを教えて",
+    noAnswer:true,
+    answer:"検索しましたが、ナレカンに記載されているナレッジの中には、該当する情報が見つかりませんでした😢",
+    intent:"社内の配送手段の使い分けについて知りたい",
+    suggestions:["こねこ便で送れるもの","社内配送サービスの種類","宅配サービスの利用手順"],
+    articleTitle:"社内の配送サービス活用ガイド",
+    refs:[]
+  },
+  { /* ターン5: 言い換えクリックでHIT */
+    userQ:"こねこ便で送れるもの",
+    noAnswer:false,
+    answer:"こねこ便420では、厚さ3cm以内の荷物を送ることができます。ただし、以下のものは送ることができません：\n\n1. 他の荷物に損害を及ぼすおそれのあるもの\n2. 再発行が困難なもの（例：原稿、フィルムなど）\n3. 航空会社が制限している物品\n4. 国際郵便で送れないもの\n5. 海外あての荷物\n\n料金：全国一律420円（税込）",
+    suggestions:[],
+    refs:["こねこ便420利用ガイド","社内配送ルール"]
+  }
+];
+
+function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,160)+'px'}
+function updateSendBtn(){sendBtn.disabled=input.value.replace(/\s/g,'').length<2||isSearching}
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function scrollToBottom(){chatArea.scrollTop=chatArea.scrollHeight}
+function updateTurnUI(){
+  document.querySelectorAll('.turn-pill').forEach((p,i)=>{p.className='turn-pill';if(i<turn-1)p.classList.add('used');else if(i===turn-1)p.classList.add('active')});
+  turnText.textContent='ターン '+turn+'/'+MAX_TURNS;
+  if(turn>=1)sessionBar.classList.add('visible');
+}
+function addMsg(type,text,refs){
+  document.getElementById('initialView')?.remove();
+  const d=document.createElement('div');d.className='chat-msg '+type;
+  let h='';
+  if(type==='user'){h='<div class="bubble main">'+escHtml(text)+'</div>'}
+  else{
+    h='<div class="chat-label"><span class="ai-icon-sm"><i class="fa-solid fa-cloud cloud"></i><span class="ai-t">AI</span></span></div><div class="bubble sub">'+escHtml(text)+'</div>';
+    if(refs&&refs.length){h+='<div class="ref-box"><div class="ref-note">こちらの回答は下記のナレッジを参考にしています。</div>';refs.forEach(r=>h+='<a href="#">📄 '+escHtml(r)+'</a>');h+='</div>'}
+  }
+  d.innerHTML=h;chatArea.appendChild(d);scrollToBottom();return d;
+}
+function removePanel(){document.getElementById('noAnswerPanel')?.remove();document.getElementById('suggestionsArea')?.remove()}
+function addSuggestions(chips){
+  removePanel();if(!chips||!chips.length)return;
+  const d=document.createElement('div');d.className='suggestions';d.id='suggestionsArea';
+  chips.forEach(t=>{const b=document.createElement('button');b.className='suggestion-chip';b.textContent=t;b.onclick=()=>{input.value=t;autoResize(input);updateSendBtn();handleSend()};d.appendChild(b)});
+  chatArea.appendChild(d);scrollToBottom();
+}
+function addNoAnswerPanel(s){
+  removePanel();
+  const d=document.createElement('div');d.className='no-answer-panel';d.id='noAnswerPanel';
+  let h='<div class="no-answer-rephrase"><div class="label"><i class="fa-solid fa-lightbulb"></i> 別のキーワードで試してみませんか？</div><div class="chips">';
+  s.suggestions.forEach(t=>{h+='<button class="suggestion-chip" onclick="clickSuggestion(this)">'+escHtml(t)+'</button>'});
+  h+='</div></div>';
+  h+='<div class="no-answer-register"><div class="label"><i class="fa-solid fa-pen-to-square"></i> このトピックのナレッジを登録しませんか？</div>';
+  h+='<a class="register-link" onclick="alert(\'記事作成画面を開きます（モックアップ）\')"><i class="fa-solid fa-plus-circle"></i>「'+escHtml(s.articleTitle)+'」として新規作成</a></div>';
+  d.innerHTML=h;chatArea.appendChild(d);scrollToBottom();
+}
+function clickSuggestion(el){input.value=el.textContent;autoResize(input);updateSendBtn();handleSend()}
+function addTyping(){
+  removePanel();
+  const d=document.createElement('div');d.className='chat-msg ai';d.id='typingIndicator';
+  d.innerHTML='<div class="chat-label"><span class="ai-icon-sm"><i class="fa-solid fa-cloud cloud"></i><span class="ai-t">AI</span></span></div><div class="bubble sub"><div class="typing-dots"><span></span><span></span><span></span></div></div>';
+  chatArea.appendChild(d);scrollToBottom();
+}
+function removeTyping(){document.getElementById('typingIndicator')?.remove()}
+function addMaxTurnsMsg(){
+  const d=document.createElement('div');d.className='max-turns-msg';
+  d.innerHTML='<div class="max-turns-bubble"><i class="fa-solid fa-circle-info" style="margin-right:6px"></i>このトピックの会話上限（'+MAX_TURNS+'ターン）に達しました。<br>新しい話題で検索を続けるか、検索を終了してください。</div><div class="max-turns-actions"><button class="btn-new-topic" onclick="resetSession()"><i class="fa-solid fa-rotate-right" style="margin-right:4px"></i>新しい話題で検索</button><button class="btn-close" onclick="alert(\'モーダルを閉じます（モックアップ）\')">検索を終了する</button></div>';
+  chatArea.appendChild(d);scrollToBottom();inputContainer.classList.add('disabled');
+}
+async function streamText(el,text){
+  const b=el.querySelector('.bubble.sub');if(!b)return;b.textContent='';
+  for(let i=0;i<text.length;i++){b.textContent+=text[i];scrollToBottom();await new Promise(r=>setTimeout(r,10+Math.random()*6))}
+}
+async function handleSend(){
+  if(isSearching||turn>=MAX_TURNS)return;
+  const q=input.value.trim();if(q.replace(/\s/g,'').length<2)return;
+  isSearching=true;updateSendBtn();removePanel();
+  addMsg('user',q);input.value='';input.style.height='auto';
+  addTyping();
+  const s=scenario[turn]||scenario[scenario.length-1];
+  await new Promise(r=>setTimeout(r,800+Math.random()*600));
+  removeTyping();
+  const aiMsg=addMsg('ai','',s.refs);
+  await streamText(aiMsg,s.answer);
+  turn++;remaining--;
+  document.getElementById('remainingText').textContent='検索可能回数：残り'+remaining+'回（月初めにリセット）';
+  document.getElementById('remainingText').classList.add('visible');
+  updateTurnUI();
+  if(turn>=MAX_TURNS){addMaxTurnsMsg();isSearching=false;updateSendBtn();return}
+  input.placeholder='追加で質問する...（Ctrl+Enterで送信）';
+  isSearching=false;updateSendBtn();input.focus();
+  setTimeout(()=>{
+    if(s.noAnswer){addNoAnswerPanel(s)}
+    else if(s.suggestions&&s.suggestions.length){addSuggestions(s.suggestions)}
+  },300);
+}
+function resetSession(){
+  turn=0;updateTurnUI();sessionBar.classList.remove('visible');
+  document.getElementById('remainingText').classList.remove('visible');
+  inputContainer.classList.remove('disabled');
+  chatArea.innerHTML='<div class="initial" id="initialView"><div class="ai-logo"><i class="fa-solid fa-cloud cloud"></i><span class="ai-text">AI</span></div><div class="speech-bubble">今日はどんなご用ですか？</div></div>';
+  input.placeholder='例）社内システムから、有給申請する方法を教えてください';
+  input.value='';input.style.height='auto';updateSendBtn();input.focus();
+}
+input.addEventListener('keydown',e=>{if(e.isComposing||e.keyCode===229)return;if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();handleSend()}});
+window.addEventListener('load',()=>{setTimeout(()=>{input.value=scenario[0].userQ;autoResize(input);updateSendBtn()},800)});
+</script>
+</body>
+</html>
