@@ -53,10 +53,15 @@ body{display:flex;justify-content:center;align-items:center;min-height:100vh;bac
 .typing-dots span:nth-child(2){animation-delay:.2s}
 .typing-dots span:nth-child(3){animation-delay:.4s}
 
-/* ===== Suggested follow-up chips ===== */
-.suggestions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;margin-bottom:8px;animation:fadeIn .4s ease}
-.suggestion-chip{background:#fff;border:1px solid #4aabb8;color:#4aabb8;padding:6px 14px;border-radius:20px;font-size:0.8125rem;cursor:pointer;font-family:inherit;transition:.15s;line-height:1.4}
-.suggestion-chip:hover{background:#4aabb8;color:#fff}
+/* ===== Suggested follow-up panel (C案準拠) ===== */
+.action-panel-wrap{display:flex;align-items:flex-start;gap:10px;justify-content:flex-end;margin-top:12px;margin-bottom:8px;animation:fadeIn .4s ease}
+.action-panel{background:#4aabb8;border-radius:10px;padding:12px 16px;display:flex;flex-direction:column;gap:8px;max-width:85%}
+.action-panel .inner-box{background:rgba(255,255,255,.15);border:1.5px solid #fff;border-radius:8px;padding:10px 16px}
+.action-panel .inner-box .box-label{font-size:.8125rem;color:#fff;font-weight:500;display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.action-panel .inner-box .box-chips{display:flex;flex-wrap:nowrap;gap:6px}
+.suggestion-chip{background:rgba(255,255,255,.15);border:1px solid #fff;color:#fff;padding:4px 10px;border-radius:20px;font-size:.75rem;cursor:pointer;font-family:inherit;transition:.15s;line-height:1.4;white-space:nowrap}
+.suggestion-chip:hover{background:rgba(255,255,255,.4)}
+.action-panel-wrap .user-avatar{width:36px;height:36px;border-radius:50%;background:#8e44ad;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:500;flex-shrink:0;margin-top:2px}
 
 /* ===== Session indicator bar ===== */
 .session-bar{display:none;align-items:center;justify-content:space-between;padding:6px 40px;font-size:0.75rem;color:#777;border-top:1px solid #f0f0f0;background:#fafafa;flex-shrink:0}
@@ -234,15 +239,17 @@ function addMsg(type,text,refs){
 function addSuggestions(chips){
   removeSuggestions();
   if(!chips||!chips.length)return;
-  const d=document.createElement('div');d.className='suggestions';d.id='suggestionsArea';
-  chips.forEach(text=>{
-    const btn=document.createElement('button');
-    btn.className='suggestion-chip';
-    btn.textContent=text;
-    btn.onclick=()=>{input.value=text;autoResize(input);updateSendBtn();handleSend()};
-    d.appendChild(btn);
-  });
-  chatArea.appendChild(d);scrollToBottom();
+  const wrap=document.createElement('div');wrap.className='action-panel-wrap';wrap.id='suggestionsArea';
+  const panel=document.createElement('div');panel.className='action-panel';
+  const box=document.createElement('div');box.className='inner-box';
+  const lbl=document.createElement('div');lbl.className='box-label';
+  lbl.innerHTML='<i class="fa-solid fa-lightbulb"></i> 質問を掘り下げてみませんか？';
+  box.appendChild(lbl);
+  const rc=document.createElement('div');rc.className='box-chips';
+  chips.forEach(t=>{const b=document.createElement('button');b.className='suggestion-chip';b.textContent=t;b.onclick=()=>{input.value=t;autoResize(input);updateSendBtn();handleSend()};rc.appendChild(b)});
+  box.appendChild(rc);panel.appendChild(box);wrap.appendChild(panel);
+  const av=document.createElement('div');av.className='user-avatar';av.textContent='武';wrap.appendChild(av);
+  chatArea.appendChild(wrap);scrollToBottom();
 }
 function removeSuggestions(){document.getElementById('suggestionsArea')?.remove()}
 
