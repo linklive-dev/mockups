@@ -207,7 +207,7 @@ function addMsg(type,text,refs){
   }
   d.innerHTML=h;chatArea.appendChild(d);scrollToBottom();return d;
 }
-function removePanel(){document.getElementById('noAnswerPanel')?.remove();document.getElementById('suggestionsArea')?.remove();document.getElementById('chiebukuroPanel')?.remove();document.querySelector('.no-answer-chiebukuro-wrap')?.remove();document.querySelectorAll('.suggest-row-right').forEach(el=>el.remove());document.querySelectorAll('.chat-msg.ai').forEach(el=>{if(el.querySelector('.bubble.sub')?.textContent.includes('について、社内メンバー'))el.remove()})}
+function removePanel(){document.getElementById('noAnswerPanel')?.remove();document.getElementById('suggestionsArea')?.remove();document.getElementById('chiebukuroPanel')?.remove();document.querySelector('.no-answer-chiebukuro-wrap')?.remove();document.querySelectorAll('.suggest-row-right').forEach(el=>el.remove());}
 function addSuggestions(chips){
   removePanel();if(!chips||!chips.length)return;
   /* サジェストチップを右寄せで表示（ユーザー側アクション） */
@@ -225,16 +225,12 @@ function addNoAnswerPanel(s){
   s.suggestions.forEach(t=>{h+='<button class="suggestion-chip" onclick="clickSuggestion(this)">'+escHtml(t)+'</button>'});
   h+='</div></div>';
   d.innerHTML=h;chatArea.appendChild(d);
-  /* 知恵袋パネル — AIの質問テキスト（左）→ アクションボタン（右） */
+  /* 知恵袋パネル — ボタン1つに質問タイトルをマージ、右寄せ */
   const cw=document.createElement('div');cw.className='no-answer-chiebukuro-wrap';
   let ch='';
-  /* AI側の質問テキスト（左寄せ） */
-  ch+='<div class="ai-ask"><div class="chat-label"><span class="ai-icon-sm"><i class="fa-solid fa-cloud cloud"></i><span class="ai-t">AI</span></span></div><div class="bubble sub">「'+escHtml(s.questionTitle)+'」について、社内メンバーに質問しますか？</div></div>';
-  /* ユーザー側のアクションブロック（右寄せ） */
   ch+='<div class="action-row">';
   ch+='<div class="action-block">';
-  ch+='<button class="action-btn" onclick="alert(\'社内知恵袋の質問作成画面を開きます（モックアップ）\n\nタイトル: '+escHtml(s.questionTitle).replace(/'/g,'\\\'')+'\')"><span>この件について、「社内メンバー」に質問する</span><span class="arrow"><i class="fa-solid fa-arrow-up"></i></span></button>';
-  ch+='<button class="action-btn" onclick="removePanel()"><span>質問しないで終了する</span><span class="arrow"><i class="fa-solid fa-arrow-up"></i></span></button>';
+  ch+='<button class="action-btn" onclick="alert(\'社内知恵袋の質問作成画面を開きます（モックアップ）\n\nタイトル: '+escHtml(s.questionTitle).replace(/'/g,'\\\\\'')+'\')"><span>「'+escHtml(s.questionTitle)+'」を「社内メンバー」に質問する</span><span class="arrow"><i class="fa-solid fa-arrow-up"></i></span></button>';
   ch+='</div>';
   ch+='<div class="user-avatar">武</div>';
   ch+='</div>';
