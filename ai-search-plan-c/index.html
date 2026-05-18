@@ -40,29 +40,20 @@ body{display:flex;justify-content:center;align-items:center;min-height:100vh;bac
 .typing-dots span{width:8px;height:8px;border-radius:50%;background:#ababab;animation:bounce .6s infinite alternate}
 .typing-dots span:nth-child(2){animation-delay:.2s}
 .typing-dots span:nth-child(3){animation-delay:.4s}
-/* Suggestion chips — ユーザーアクションなので右寄せ */
-.suggestions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;margin-bottom:8px;animation:fadeIn .4s ease;justify-content:flex-end}
-.suggestion-chip{background:#fff;border:1px solid #4aabb8;color:#4aabb8;padding:6px 14px;border-radius:20px;font-size:.8125rem;cursor:pointer;font-family:inherit;transition:.15s;line-height:1.4}
+/* === 統合アクションパネル（本番UIの緑枠Divに準拠） === */
+.action-panel-wrap{display:flex;align-items:flex-start;gap:10px;justify-content:flex-end;margin-top:12px;margin-bottom:8px;animation:fadeIn .4s ease}
+.action-panel{background:#fff;border:1.5px solid #4aabb8;border-radius:10px;padding:14px 18px;display:flex;flex-direction:column;gap:10px;flex:1;min-width:0}
+.action-panel .row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.action-panel .row-label{font-size:.8125rem;color:#4aabb8;font-weight:500;display:flex;align-items:center;gap:6px;white-space:nowrap;flex-shrink:0}
+.action-panel .row-chips{display:flex;flex-wrap:nowrap;gap:6px;flex:1;justify-content:flex-end;min-width:0}
+.action-panel .row-divider{border:none;border-top:1px solid #e8f4f6;margin:0}
+.suggestion-chip{background:#fff;border:1px solid #4aabb8;color:#4aabb8;padding:4px 10px;border-radius:20px;font-size:.75rem;cursor:pointer;font-family:inherit;transition:.15s;line-height:1.4;white-space:nowrap}
 .suggestion-chip:hover{background:#4aabb8;color:#fff}
-/* === C案: 回答なし時の案内パネル === */
-.no-answer-panel{animation:fadeIn .4s ease;margin-top:12px;margin-bottom:8px;display:flex;flex-direction:column;align-items:flex-end}
-.no-answer-rephrase{background:#f0f9fa;border:1px solid #d4ecef;border-radius:8px;padding:14px 18px;margin-bottom:10px;max-width:75%}
-.no-answer-rephrase .label{font-size:.8125rem;color:#4aabb8;font-weight:500;margin-bottom:8px;display:flex;align-items:center;gap:6px}
-.no-answer-rephrase .chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}
-/* 知恵袋パネル: 本番UIのトンマナに合わせる — アクションブロックは右寄せ */
-.no-answer-chiebukuro-wrap{display:flex;flex-direction:column;align-items:flex-end;animation:fadeIn .4s ease;margin-top:12px;margin-bottom:8px}
-.no-answer-chiebukuro-wrap .ai-ask{max-width:75%;align-self:flex-start}
-.no-answer-chiebukuro-wrap .ai-ask .bubble{background:#f4f4f4;color:#555;border-radius:0 10px 10px;padding:12px 16px;font-size:1rem}
-.no-answer-chiebukuro-wrap .action-row{display:flex;align-items:flex-start;gap:10px;margin-top:8px;justify-content:flex-end}
-.no-answer-chiebukuro-wrap .action-block{background:#fff;border:1.5px solid #4aabb8;border-radius:10px;padding:12px 16px;display:flex;flex-direction:column;gap:8px;max-width:75%}
-.no-answer-chiebukuro-wrap .action-btn{display:flex;align-items:center;justify-content:space-between;background:#fff;border:none;border-radius:8px;padding:10px 16px;color:#4aabb8;font-size:.9375rem;font-family:inherit;cursor:pointer;transition:.15s;gap:12px}
-.no-answer-chiebukuro-wrap .action-btn:hover{background:#f0f9fa}
-.no-answer-chiebukuro-wrap .action-btn .arrow{width:28px;height:28px;border-radius:50%;background:#4aabb8;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.no-answer-chiebukuro-wrap .action-btn .arrow i{font-size:12px;color:#fff}
-.no-answer-chiebukuro-wrap .user-avatar{width:36px;height:36px;border-radius:50%;background:#8e44ad;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:500;flex-shrink:0;margin-top:2px}
-/* 右寄せサジェストラッパ（ユーザーアイコン付き） */
-.suggest-row-right{display:flex;align-items:flex-start;gap:10px;justify-content:flex-end;margin-top:12px;margin-bottom:8px;animation:fadeIn .4s ease}
-.suggest-row-right .user-avatar{width:36px;height:36px;border-radius:50%;background:#8e44ad;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:500;flex-shrink:0;margin-top:2px}
+.action-panel .action-btn{display:flex;align-items:center;justify-content:space-between;background:#fff;border:none;border-radius:8px;padding:8px 4px;color:#4aabb8;font-size:.9375rem;font-family:inherit;cursor:pointer;transition:.15s;gap:12px;width:100%}
+.action-panel .action-btn:hover{background:#f0f9fa}
+.action-panel .action-btn .arrow{width:28px;height:28px;border-radius:50%;background:#4aabb8;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.action-panel .action-btn .arrow i{font-size:12px;color:#fff}
+.action-panel-wrap .user-avatar{width:36px;height:36px;border-radius:50%;background:#8e44ad;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:500;flex-shrink:0;margin-top:2px}
 /* Session bar */
 .session-bar{display:none;align-items:center;justify-content:space-between;padding:6px 40px;font-size:.75rem;color:#777;border-top:1px solid #f0f0f0;background:#fafafa;flex-shrink:0}
 .session-bar.visible{display:flex}
@@ -207,34 +198,37 @@ function addMsg(type,text,refs){
   }
   d.innerHTML=h;chatArea.appendChild(d);scrollToBottom();return d;
 }
-function removePanel(){document.getElementById('noAnswerPanel')?.remove();document.getElementById('suggestionsArea')?.remove();document.getElementById('chiebukuroPanel')?.remove();document.querySelector('.no-answer-chiebukuro-wrap')?.remove();document.querySelectorAll('.suggest-row-right').forEach(el=>el.remove());}
+function removePanel(){document.getElementById('actionPanel')?.remove();}
 function addSuggestions(chips){
   removePanel();if(!chips||!chips.length)return;
-  /* サジェストチップを右寄せで表示（ユーザー側アクション） */
-  const wrapper=document.createElement('div');wrapper.className='suggest-row-right';wrapper.id='suggestionsArea';
-  const chipContainer=document.createElement('div');chipContainer.className='suggestions';chipContainer.style.margin='0';
-  chips.forEach(t=>{const b=document.createElement('button');b.className='suggestion-chip';b.textContent=t;b.onclick=()=>{input.value=t;autoResize(input);updateSendBtn();handleSend()};chipContainer.appendChild(b)});
-  wrapper.appendChild(chipContainer);
-  chatArea.appendChild(wrapper);scrollToBottom();
+  /* HITケース: 緑枠Div内におすすめ質問チップ */
+  const wrap=document.createElement('div');wrap.className='action-panel-wrap';wrap.id='actionPanel';
+  const panel=document.createElement('div');panel.className='action-panel';
+  const row=document.createElement('div');row.className='row';
+  row.innerHTML='<span class="row-label"><i class="fa-solid fa-lightbulb"></i> 関連する質問</span>';
+  const rc=document.createElement('div');rc.className='row-chips';
+  chips.forEach(t=>{const b=document.createElement('button');b.className='suggestion-chip';b.textContent=t;b.onclick=()=>{input.value=t;autoResize(input);updateSendBtn();handleSend()};rc.appendChild(b)});
+  row.appendChild(rc);panel.appendChild(row);wrap.appendChild(panel);
+  const av=document.createElement('div');av.className='user-avatar';av.textContent='武';wrap.appendChild(av);
+  chatArea.appendChild(wrap);scrollToBottom();
 }
 function addNoAnswerPanel(s){
   removePanel();
-  /* 言い換え提案パネル — 右寄せ */
-  const d=document.createElement('div');d.className='no-answer-panel';d.id='noAnswerPanel';
-  let h='<div class="no-answer-rephrase"><div class="label"><i class="fa-solid fa-lightbulb"></i> 別のキーワードで試してみませんか？</div><div class="chips">';
-  s.suggestions.forEach(t=>{h+='<button class="suggestion-chip" onclick="clickSuggestion(this)">'+escHtml(t)+'</button>'});
-  h+='</div></div>';
-  d.innerHTML=h;chatArea.appendChild(d);
-  /* 知恵袋パネル — ボタン1つに質問タイトルをマージ、右寄せ */
-  const cw=document.createElement('div');cw.className='no-answer-chiebukuro-wrap';
-  let ch='';
-  ch+='<div class="action-row">';
-  ch+='<div class="action-block">';
-  ch+='<button class="action-btn" onclick="alert(\'社内知恵袋の質問作成画面を開きます（モックアップ）\n\nタイトル: '+escHtml(s.questionTitle).replace(/'/g,'\\\\\'')+'\')"><span>「'+escHtml(s.questionTitle)+'」を「社内メンバー」に質問する</span><span class="arrow"><i class="fa-solid fa-arrow-up"></i></span></button>';
-  ch+='</div>';
-  ch+='<div class="user-avatar">武</div>';
-  ch+='</div>';
-  cw.innerHTML=ch;chatArea.appendChild(cw);scrollToBottom();
+  const wrap=document.createElement('div');wrap.className='action-panel-wrap';wrap.id='actionPanel';
+  const panel=document.createElement('div');panel.className='action-panel';
+  const row1=document.createElement('div');row1.className='row';
+  row1.innerHTML='<span class="row-label"><i class="fa-solid fa-lightbulb"></i> 別のキーワードで試してみませんか？</span>';
+  const rc=document.createElement('div');rc.className='row-chips';
+  s.suggestions.forEach(t=>{const b=document.createElement('button');b.className='suggestion-chip';b.textContent=t;b.onclick=()=>{input.value=t;autoResize(input);updateSendBtn();handleSend()};rc.appendChild(b)});
+  row1.appendChild(rc);panel.appendChild(row1);
+  const hr=document.createElement('hr');hr.className='row-divider';panel.appendChild(hr);
+  const btn=document.createElement('button');btn.className='action-btn';
+  const title=s.questionTitle;
+  btn.onclick=()=>{alert('社内知恵袋の質問作成画面を開きます（モックアップ）\n\nタイトル: '+title)};
+  btn.innerHTML='<span>「'+escHtml(title)+'」を「社内メンバー」に質問する</span><span class="arrow"><i class="fa-solid fa-arrow-up"></i></span>';
+  panel.appendChild(btn);wrap.appendChild(panel);
+  const av=document.createElement('div');av.className='user-avatar';av.textContent='武';wrap.appendChild(av);
+  chatArea.appendChild(wrap);scrollToBottom();
 }
 function clickSuggestion(el){input.value=el.textContent;autoResize(input);updateSendBtn();handleSend()}
 function addTyping(){
