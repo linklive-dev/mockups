@@ -15,17 +15,27 @@ body{
   display:flex;justify-content:center;align-items:center;min-height:100vh;
 }
 
-/* ===== iPhone frame ===== */
+/* ===== Phone frame (PC only) ===== */
 .phone-frame{
   width:390px;height:844px;background:#fff;border-radius:44px;
   overflow:hidden;position:relative;
   box-shadow:0 0 0 4px #222,0 0 0 6px #555,0 12px 40px rgba(0,0,0,.5);
   display:flex;flex-direction:column;
 }
-
 .status-bar{height:54px;background:#00838f;display:flex;align-items:flex-end;justify-content:space-between;padding:0 28px 6px;flex-shrink:0}
 .status-bar .time{font-size:15px;font-weight:500;color:#fff}
 .status-bar .icons{display:flex;gap:5px;font-size:12px;color:#fff}
+
+/* ===== Responsive: real mobile → fullscreen ===== */
+@media (max-width:500px){
+  body{background:#fff;align-items:stretch}
+  .phone-frame{
+    width:100%;height:100vh;height:100dvh;border-radius:0;
+    box-shadow:none;
+  }
+  .status-bar{display:none}
+  .safe-bottom{height:env(safe-area-inset-bottom,0px)}
+}
 
 .nav-bar{height:44px;background:#00838f;display:flex;align-items:center;padding:0 12px;flex-shrink:0}
 .nav-back{color:#fff;font-size:18px;padding:8px;cursor:pointer;background:none;border:none}
@@ -61,7 +71,6 @@ body{
 .typing-dots span:nth-child(2){animation-delay:.2s}
 .typing-dots span:nth-child(3){animation-delay:.4s}
 
-/* ===== MISS panel: keywords + chiebukuro ===== */
 .action-panel-wrap{display:flex;flex-direction:column;align-items:flex-end;margin-top:10px;margin-bottom:8px;animation:fadeIn .4s ease}
 .action-panel{background:#00838f;border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;max-width:90%}
 .action-panel .inner-box{background:rgba(255,255,255,.15);border:1.5px solid #fff;border-radius:8px;padding:10px 12px}
@@ -69,10 +78,6 @@ body{
 .action-panel .box-chips{display:flex;flex-direction:column;gap:6px}
 .suggestion-chip{background:rgba(255,255,255,.15);border:1px solid #fff;color:#fff;padding:6px 12px;border-radius:20px;font-size:12px;cursor:pointer;font-family:inherit;transition:.15s;line-height:1.4;text-align:left}
 .suggestion-chip:hover{background:rgba(255,255,255,.4)}
-/* HIT case suggestion - white bg */
-.suggestion-chip.hit{background:#fff;border-color:#00838f;color:#00838f}
-.suggestion-chip.hit:hover{background:#e0f2f3}
-/* Chiebukuro button */
 .action-btn{display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.15);border:1.5px solid #fff;border-radius:8px;padding:10px 12px;color:#fff;font-size:13px;font-family:inherit;cursor:pointer;transition:.15s;gap:8px;width:100%;text-align:left}
 .action-btn:hover{background:rgba(255,255,255,.3)}
 .action-btn .arrow{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0}
@@ -165,7 +170,7 @@ let turn=0,remaining=48,isSearching=false;
 const MAX_TURNS=5;
 
 const scenario=[
-  { /* ターン1: 回答なし → MISS UI */
+  {
     userQ:"F1A車載機の道路区分確定時間について教えて",
     noAnswer:true,
     answer:"検索しましたが、ナレカンに記載されているナレッジの中には、該当する情報が見つかりませんでした😢",
@@ -173,21 +178,21 @@ const scenario=[
     questionTitle:"F1A車載機の道路区分確定時間について",
     refs:[]
   },
-  { /* ターン2: 言い換えでHIT! */
+  {
     userQ:"F1A車載機の道路区分設定手順",
     noAnswer:false,
     answer:"F1A車載機の道路区分は、「道路・運行」ボタンを短押しで切り替えできます。\n\n切替順序：\n1. 一般道\n2. 市街地\n3. 高速道\n4. 有料道\n\n音声案内とボタンの色で確認可能です。\n※ 確定時間は設定画面から変更可（デフォルト5秒）",
     suggestions:["確定時間を変更するには？","ボタン操作一覧は？","音声案内の設定方法は？"],
     refs:[{name:"DTS-F1A操作マニュアル.pdf",type:"file"},{name:"車載機設定ガイド",type:"article"}]
   },
-  { /* ターン3: 深掘り */
+  {
     userQ:"確定時間を変更するには？",
     noAnswer:false,
     answer:"道路区分の確定時間の変更手順：\n\n1. メニューボタン長押し→設定画面\n2.「道路区分設定」を選択\n3.「確定時間」で秒数変更（1〜30秒）\n4. 決定ボタンで保存\n\n推奨設定：\n• 市街地 → 3秒\n• 高速道路 → 5秒\n• 山間部 → 10秒",
     suggestions:["設定の初期化方法は？","他の設定項目は？","道路区分の誤認識対処"],
     refs:[{name:"DTS-F1A操作マニュアル 第5章.pdf",type:"file"}]
   },
-  { /* ターン4: 再度MISS → C案UI */
+  {
     userQ:"こねこ便と郵便の使い分けを教えて",
     noAnswer:true,
     answer:"検索しましたが、ナレカンに記載されているナレッジの中には、該当する情報が見つかりませんでした😢",
@@ -195,7 +200,7 @@ const scenario=[
     questionTitle:"こねこ便と郵便の使い分けについて",
     refs:[]
   },
-  { /* ターン5: HIT */
+  {
     userQ:"こねこ便で送れるもの",
     noAnswer:false,
     answer:"こねこ便420では、厚さ3cm以内の荷物を送れます。\n\n送れないもの：\n1. 他の荷物に損害を与えるもの\n2. 再発行困難なもの（原稿等）\n3. 航空会社制限物品\n4. 国際郵便不可のもの\n5. 海外あて荷物\n\n料金：全国一律420円（税込）",
@@ -255,7 +260,6 @@ function addNoAnswerPanel(s){
   removePanel();
   const w=document.createElement('div');w.className='action-panel-wrap';w.id='actionPanel';
   const p=document.createElement('div');p.className='action-panel';
-  /* Box 1: keyword suggestions */
   const b1=document.createElement('div');b1.className='inner-box';
   const l=document.createElement('div');l.className='box-label';
   l.innerHTML='<i class="fa-solid fa-lightbulb"></i> 別のキーワードで試してみませんか？';
@@ -263,7 +267,6 @@ function addNoAnswerPanel(s){
   const c=document.createElement('div');c.className='box-chips';
   s.suggestions.forEach(t=>{const btn=document.createElement('button');btn.className='suggestion-chip';btn.textContent=t;btn.onclick=()=>{input.value=t;autoResize(input);updateBtn();handleSend()};c.appendChild(btn)});
   b1.appendChild(c);p.appendChild(b1);
-  /* Box 2: chiebukuro */
   const btn=document.createElement('button');btn.className='action-btn';
   btn.onclick=()=>alert('社内知恵袋の質問作成画面を開きます（モックアップ）\n\nタイトル: '+s.questionTitle);
   btn.innerHTML='<span style="flex:1">「'+escHtml(s.questionTitle)+'」を<br>「社内メンバー」に質問する</span><span class="arrow"><i class="fa-solid fa-arrow-up"></i></span>';
