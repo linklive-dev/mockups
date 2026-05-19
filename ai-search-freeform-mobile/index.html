@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ナレカン AI検索 モバイル - フリーテキスト追加質問</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+body{
+  font-family:'Noto Sans JP','Helvetica Neue',Arial,sans-serif;
+  color:#555;background:#fff;
+  display:flex;justify-content:center;align-items:center;
+  min-height:100vh;background:#333;
+}
+
+/* ===== iPhone frame ===== */
+.phone-frame{
+  width:390px;height:844px;background:#fff;border-radius:44px;
+  overflow:hidden;position:relative;
+  box-shadow:0 0 0 4px #222,0 0 0 6px #555,0 12px 40px rgba(0,0,0,.5);
+  display:flex;flex-direction:column;
+}
+
+/* Status bar */
+.status-bar{
+  height:54px;background:#00838f;display:flex;align-items:flex-end;
+  justify-content:space-between;padding:0 28px 6px;flex-shrink:0;
+}
+.status-bar .time{font-size:15px;font-weight:500;color:#fff}
+.status-bar .icons{display:flex;gap:5px;font-size:12px;color:#fff}
+
+/* Nav bar */
+.nav-bar{
+  height:44px;background:#00838f;display:flex;align-items:center;
+  padding:0 12px;flex-shrink:0;
+}
+.nav-back{color:#fff;font-size:18px;padding:8px;cursor:pointer;background:none;border:none}
+.nav-title{flex:1;text-align:center;color:#fff;font-size:17px;font-weight:500;letter-spacing:.03em}
+.nav-spacer{width:34px}
+
+/* Chat area */
+.chat-area{flex:1;overflow-y:auto;padding:16px 12px;min-height:0;scroll-behavior:smooth;background:#fff}
+
+/* Initial */
+.initial{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:12px}
+.initial .ai-logo{position:relative}
+.initial .ai-logo .cloud{font-size:44px;color:#00838f}
+.initial .ai-logo .ai-text{position:absolute;bottom:-2px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:500;color:#00838f}
+.initial .speech{font-size:15px;padding:12px 20px;background:#f4f4f4;color:#555;border-radius:0 10px 10px;line-height:1.6}
+
+/* Messages */
+.chat-msg{margin-bottom:12px;animation:fadeIn .3s ease}
+.chat-msg.user{display:flex;flex-direction:column;align-items:flex-end}
+.chat-msg.ai{display:flex;flex-direction:column;align-items:flex-start}
+.bubble{padding:12px 14px;white-space:pre-wrap;width:fit-content;max-width:85%;font-size:14px;color:#555;line-height:1.6;letter-spacing:.03em}
+.bubble.main{background:#00838f;color:#fff;border-radius:10px;border-top-right-radius:0}
+.bubble.sub{background:#f4f4f4;color:#555;border-radius:0 10px 10px}
+.ai-label{font-size:10px;color:#ababab;margin-bottom:3px;display:flex;align-items:center;gap:4px}
+.ai-label .cloud{font-size:18px;color:#00838f}
+.ai-label .ai-t{font-size:6px;font-weight:500;color:#00838f}
+
+/* References */
+.ref-box{margin-top:8px;max-width:85%}
+.ref-note{font-size:12px;color:#777;margin-bottom:4px}
+.ref-box a{display:flex;align-items:center;gap:6px;font-size:13px;color:#337ab7;padding:3px 0;text-decoration:none}
+.ref-box a .ref-icon{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:3px;font-size:10px;flex-shrink:0}
+.ref-box a .ref-icon.file{background:#e8f4fd;color:#337ab7}
+.ref-box a .ref-icon.article{background:#e8f8e8;color:#3a8a3a}
+
+/* Typing */
+.typing-dots{display:inline-flex;gap:4px;padding:12px 14px}
+.typing-dots span{width:7px;height:7px;border-radius:50%;background:#ababab;animation:bounce .6s infinite alternate}
+.typing-dots span:nth-child(2){animation-delay:.2s}
+.typing-dots span:nth-child(3){animation-delay:.4s}
+
+/* Suggestion panel */
+.action-panel-wrap{display:flex;flex-direction:column;align-items:flex-end;margin-top:10px;margin-bottom:8px;animation:fadeIn .4s ease}
+.action-panel{background:#00838f;border-radius:10px;padding:10px 12px;max-width:90%}
+.action-panel .inner-box{background:rgba(255,255,255,.15);border:1.5px solid #fff;border-radius:8px;padding:10px 12px}
+.action-panel .box-label{font-size:12px;color:#fff;font-weight:500;display:flex;align-items:center;gap:5px;margin-bottom:8px}
+.action-panel .box-chips{display:flex;flex-direction:column;gap:6px}
+.suggestion-chip{background:rgba(255,255,255,.15);border:1px solid #fff;color:#fff;padding:6px 12px;border-radius:20px;font-size:12px;cursor:pointer;font-family:inherit;transition:.15s;line-height:1.4;text-align:left}
+.suggestion-chip:hover{background:rgba(255,255,255,.4)}
+
+/* Session bar */
+.session-bar{display:none;align-items:center;justify-content:space-between;padding:6px 16px;font-size:11px;color:#777;border-top:1px solid #f0f0f0;background:#fafafa;flex-shrink:0}
+.session-bar.visible{display:flex}
+.turn-info{display:flex;align-items:center;gap:6px}
+.turn-pills{display:flex;gap:2px}
+.turn-pill{width:12px;height:3px;border-radius:2px;background:#e0e0e0;transition:.3s}
+.turn-pill.active{background:#00838f}
+.turn-pill.used{background:#7bbfc5}
+.turn-text{font-size:11px;color:#777}
+.new-topic-btn{background:none;border:1px solid #e0e0e0;color:#555;padding:3px 10px;border-radius:4px;font-size:11px;cursor:pointer;font-family:inherit}
+
+/* Bottom area */
+.bottom-area{flex-shrink:0}
+.filter-row{display:flex;flex-direction:column;gap:2px;padding:4px 12px;align-items:flex-end}
+.filter-check{display:flex;align-items:center;gap:4px;font-size:11px;color:#555}
+.filter-check input{width:13px;height:13px;accent-color:#00838f}
+
+.input-container{background:#00838f;padding:6px 12px 6px}
+.remaining-count{text-align:right;color:#fff;font-size:12px;margin-bottom:2px;display:none}
+.remaining-count.visible{display:block}
+.input-wrapper{background:#fff;border-radius:20px;display:flex;align-items:flex-end;padding:4px 10px}
+.input-wrapper textarea{border:none;flex:1;resize:none;font-size:14px;font-family:inherit;outline:none;min-height:34px;max-height:100px;padding:6px 4px;color:#555;line-height:1.5}
+.input-wrapper textarea::placeholder{color:#ababab}
+.send-btn{background:#f4f4f4;border:none;border-radius:50%;color:#00838f;font-size:14px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;margin-bottom:2px}
+.send-btn:disabled{opacity:.4}
+
+.safe-bottom{height:34px;background:#00838f;flex-shrink:0}
+
+.note{text-align:right;font-size:9px;color:#ababab;padding:2px 12px 0;background:#fff}
+
+/* Max turns */
+.max-turns-msg{animation:fadeIn .4s ease;margin-bottom:12px;display:flex;flex-direction:column;align-items:center;text-align:center}
+.max-turns-bubble{background:#fff3cd;color:#856404;border:1px solid #ffeeba;border-radius:10px;padding:12px 16px;font-size:13px;max-width:90%}
+.max-turns-actions{display:flex;gap:10px;margin-top:10px}
+.max-turns-actions button{padding:8px 16px;border-radius:4px;font-size:13px;cursor:pointer;font-family:inherit}
+.btn-new{background:#00838f;color:#fff;border:none}
+.btn-end{background:#fff;color:#555;border:1px solid #e0e0e0}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+@keyframes bounce{to{transform:translateY(-5px);opacity:.4}}
+</style>
+</head>
+<body>
+
+<div class="phone-frame">
+  <div class="status-bar">
+    <span class="time">21:39</span>
+    <span class="icons"><i class="fa-solid fa-signal"></i> <i class="fa-solid fa-wifi"></i> <i class="fa-solid fa-battery-full"></i></span>
+  </div>
+  <div class="nav-bar">
+    <button class="nav-back"><i class="fa-solid fa-chevron-left"></i></button>
+    <span class="nav-title">AI検索</span>
+    <span class="nav-spacer"></span>
+  </div>
+
+  <div class="chat-area" id="chatArea">
+    <div class="initial" id="initialView">
+      <div class="ai-logo">
+        <i class="fa-solid fa-cloud cloud"></i>
+        <span class="ai-text">AI</span>
+      </div>
+      <div class="speech">今日はどんなご用ですか？</div>
+    </div>
+  </div>
+
+  <div class="session-bar" id="sessionBar">
+    <div class="turn-info">
+      <div class="turn-pills" id="turnPills"><div class="turn-pill"></div><div class="turn-pill"></div><div class="turn-pill"></div><div class="turn-pill"></div><div class="turn-pill"></div></div>
+      <span class="turn-text" id="turnText">ターン 0/5</span>
+    </div>
+    <button class="new-topic-btn" onclick="resetSession()"><i class="fa-solid fa-rotate-right" style="font-size:9px"></i> 新しい話題</button>
+  </div>
+
+  <div class="bottom-area" id="bottomArea">
+    <div class="note">ナレカンAIの回答が、必ずしも正しいとは限りません。</div>
+    <div class="filter-row">
+      <label class="filter-check"><input type="checkbox"> フォルダ絞り込み</label>
+      <label class="filter-check"><input type="checkbox"> カテゴリ絞り込み</label>
+    </div>
+    <div class="input-container" id="inputContainer">
+      <div class="remaining-count" id="remainingText">残り48回（月初リセット）</div>
+      <div class="input-wrapper">
+        <textarea id="questionInput" rows="1" placeholder="例）有給申請の方法を教えてください" oninput="autoResize(this);updateBtn()"></textarea>
+        <button class="send-btn" id="sendBtn" disabled onclick="handleSend()"><i class="fa-solid fa-arrow-up"></i></button>
+      </div>
+    </div>
+  </div>
+  <div class="safe-bottom"></div>
+</div>
+
+<script>
+const chatArea=document.getElementById('chatArea'),input=document.getElementById('questionInput'),sendBtn=document.getElementById('sendBtn'),sessionBar=document.getElementById('sessionBar'),turnText=document.getElementById('turnText'),inputContainer=document.getElementById('inputContainer');
+let turn=0,remaining=48,isSearching=false;
+const MAX_TURNS=5;
+
+const scenario=[
+  {
+    userQ:"有給申請の方法を教えてください",
+    answer:"有給休暇の申請方法についてご説明します。\n\n1. 社内ポータルサイト「勤怠管理」にログイン\n2. 左メニューの「休暇申請」をタップ\n3. 「新規申請」→ 取得希望日を選択\n4. 休暇種別で「年次有給休暇」を選択\n5. 承認者を確認し「申請」をタップ\n\n申請後、上長にメール通知が届きます。",
+    refs:[{name:"有給休暇申請マニュアル.pdf",type:"file"},{name:"勤怠管理システム利用ガイド",type:"article"}],
+    suggestions:["申請は何日前まで？","半日有給も取れますか？","残日数の確認方法"]
+  },
+  {
+    userQ:"申請は何日前まで？",
+    answer:"有給休暇の申請期限についてお答えします。\n\n■ 通常の有給申請\n取得希望日の3営業日前まで\n\n■ 急な体調不良等\n当日の始業前に上長へ連絡のうえ、3営業日以内に事後申請\n\n■ 連続取得（3日以上）\n1週間前まで推奨。繁忙期は2週間前まで。",
+    refs:[{name:"就業規則 第23条",type:"article"},{name:"有給休暇取得ルール（2024年改訂版）.docx",type:"file"}],
+    suggestions:["上司が不在の場合は？","残日数の確認方法","事後申請の手順"]
+  },
+  {
+    userQ:"上司が不在の場合は？",
+    answer:"上司が不在の場合の対応方法です。\n\n■ 代理承認\nシステムが自動的に代理承認者に通知を送ります。\n\n■ 代理承認者の確認\n「勤怠管理」→「組織設定」→「承認ルート」\n\n■ 代理承認者も不在\n人事部（内線: 1234）に直接ご連絡ください。",
+    refs:[{name:"承認フロー設定マニュアル.pdf",type:"file"},{name:"人事部 緊急連絡先一覧",type:"article"}],
+    suggestions:["半日有給は申請可能？","残日数の確認方法","申請キャンセル方法"]
+  },
+  {
+    userQ:"半日有給は申請可能？",
+    answer:"はい、半日有給も申請可能です。\n\n■ 種類\n• 午前半休：〜12:00まで休暇\n• 午後半休：12:00以降休暇\n\n■ 申請方法\n通常と同じ手順で、休暇種別で「午前半休」or「午後半休」を選択\n\n■ 消化計算\n半日有給は0.5日としてカウント",
+    refs:[{name:"就業規則 第23条の2",type:"article"},{name:"半日有給制度FAQ",type:"article"}],
+    suggestions:["残日数の確認方法","時間単位の有給は？","有給不足の場合は？"]
+  },
+  {
+    userQ:"残日数の確認方法",
+    answer:"有給残日数の確認方法です。\n\n■ 方法1：勤怠管理システム\n「マイページ」→「有給残日数」\n\n■ 方法2：給与明細\n毎月の明細下部に記載\n\n■ 方法3：人事部\n内線1234で確認可\n\n■ 付与タイミング\n毎年4月1日。繰越は最大20日。有効期限は2年間。",
+    refs:[{name:"勤怠管理システム操作ガイド.pdf",type:"file"},{name:"有給休暇付与・繰越ルール",type:"article"}],
+    suggestions:[]
+  }
+];
+
+function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,100)+'px'}
+function updateBtn(){sendBtn.disabled=input.value.replace(/\s/g,'').length<5||isSearching}
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function scrollBottom(){chatArea.scrollTop=chatArea.scrollHeight}
+
+function updateTurnUI(){
+  document.querySelectorAll('.turn-pill').forEach((p,i)=>{p.className='turn-pill';if(i<turn-1)p.classList.add('used');else if(i===turn-1)p.classList.add('active')});
+  turnText.textContent='ターン '+turn+'/'+MAX_TURNS;
+  if(turn>=1)sessionBar.classList.add('visible');
+}
+
+function addMsg(type,text,refs){
+  document.getElementById('initialView')?.remove();
+  const d=document.createElement('div');d.className='chat-msg '+type;
+  let h='';
+  if(type==='user'){h='<div class="bubble main">'+escHtml(text)+'</div>'}
+  else{
+    h='<div class="ai-label"><i class="fa-solid fa-cloud cloud"></i></div><div class="bubble sub">'+escHtml(text)+'</div>';
+    if(refs&&refs.length){
+      h+='<div class="ref-box"><div class="ref-note">参照元ナレッジ</div>';
+      refs.forEach(r=>{
+        const isFile=r.type==='file';
+        const cls=isFile?'file':'article';
+        const icon=isFile?'<i class="fa-solid fa-paperclip"></i>':'<i class="fa-solid fa-file-lines"></i>';
+        h+='<a href="#"><span class="ref-icon '+cls+'">'+icon+'</span>'+escHtml(r.name)+'</a>';
+      });
+      h+='</div>';
+    }
+  }
+  d.innerHTML=h;chatArea.appendChild(d);scrollBottom();return d;
+}
+
+function addSuggestions(chips){
+  removeSuggestions();if(!chips||!chips.length)return;
+  const w=document.createElement('div');w.className='action-panel-wrap';w.id='suggestionsArea';
+  const p=document.createElement('div');p.className='action-panel';
+  const b=document.createElement('div');b.className='inner-box';
+  const l=document.createElement('div');l.className='box-label';
+  l.innerHTML='<i class="fa-solid fa-lightbulb"></i> 質問を掘り下げてみませんか？';
+  b.appendChild(l);
+  const c=document.createElement('div');c.className='box-chips';
+  chips.forEach(t=>{const btn=document.createElement('button');btn.className='suggestion-chip';btn.textContent=t;btn.onclick=()=>{input.value=t;autoResize(input);updateBtn();handleSend()};c.appendChild(btn)});
+  b.appendChild(c);p.appendChild(b);w.appendChild(p);
+  chatArea.appendChild(w);scrollBottom();
+}
+function removeSuggestions(){document.getElementById('suggestionsArea')?.remove()}
+
+function addTyping(){
+  removeSuggestions();
+  const d=document.createElement('div');d.className='chat-msg ai';d.id='typingIndicator';
+  d.innerHTML='<div class="ai-label"><i class="fa-solid fa-cloud cloud"></i></div><div class="bubble sub"><div class="typing-dots"><span></span><span></span><span></span></div></div>';
+  chatArea.appendChild(d);scrollBottom();
+}
+function removeTyping(){document.getElementById('typingIndicator')?.remove()}
+
+function addMaxTurnsMsg(){
+  const d=document.createElement('div');d.className='max-turns-msg';
+  d.innerHTML='<div class="max-turns-bubble"><i class="fa-solid fa-circle-info" style="margin-right:4px"></i>会話上限（'+MAX_TURNS+'ターン）に達しました。</div><div class="max-turns-actions"><button class="btn-new" onclick="resetSession()"><i class="fa-solid fa-rotate-right" style="margin-right:3px"></i>新しい話題</button><button class="btn-end" onclick="alert(\'閉じます\')">終了</button></div>';
+  chatArea.appendChild(d);scrollBottom();
+  inputContainer.style.opacity='.4';inputContainer.style.pointerEvents='none';
+}
+
+async function streamText(el,text){
+  const b=el.querySelector('.bubble.sub');if(!b)return;b.textContent='';
+  for(let i=0;i<text.length;i++){b.textContent+=text[i];scrollBottom();await new Promise(r=>setTimeout(r,8+Math.random()*5))}
+}
+
+async function handleSend(){
+  if(isSearching||turn>=MAX_TURNS)return;
+  const q=input.value.trim();if(q.replace(/\s/g,'').length<5)return;
+  isSearching=true;updateBtn();removeSuggestions();
+  addMsg('user',q);input.value='';input.style.height='auto';
+  addTyping();
+  const s=scenario[turn]||scenario[scenario.length-1];
+  await new Promise(r=>setTimeout(r,700+Math.random()*500));
+  removeTyping();
+  const aiMsg=addMsg('ai','',s.refs);
+  await streamText(aiMsg,s.answer);
+  turn++;remaining--;
+  document.getElementById('remainingText').textContent='残り'+remaining+'回（月初リセット）';
+  document.getElementById('remainingText').classList.add('visible');
+  updateTurnUI();
+  if(turn>=MAX_TURNS){addMaxTurnsMsg();isSearching=false;updateBtn();return}
+  input.placeholder='追加で質問する...';
+  isSearching=false;updateBtn();input.focus();
+  setTimeout(()=>addSuggestions(s.suggestions),300);
+}
+
+function resetSession(){
+  turn=0;updateTurnUI();sessionBar.classList.remove('visible');
+  document.getElementById('remainingText').classList.remove('visible');
+  inputContainer.style.opacity='1';inputContainer.style.pointerEvents='auto';
+  chatArea.innerHTML='<div class="initial" id="initialView"><div class="ai-logo"><i class="fa-solid fa-cloud cloud"></i><span class="ai-text">AI</span></div><div class="speech">今日はどんなご用ですか？</div></div>';
+  input.placeholder='例）有給申請の方法を教えてください';
+  input.value='';input.style.height='auto';updateBtn();
+}
+
+input.addEventListener('keydown',e=>{if(e.isComposing||e.keyCode===229)return;if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();handleSend()}});
+window.addEventListener('load',()=>{setTimeout(()=>{input.value=scenario[0].userQ;autoResize(input);updateBtn()},600)});
+</script>
+</body>
+</html>

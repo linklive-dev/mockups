@@ -34,8 +34,11 @@ body{display:flex;justify-content:center;align-items:center;min-height:100vh;bac
 .chat-label .ai-icon-sm .ai-t{position:absolute;bottom:-1px;left:50%;transform:translateX(-50%);font-size:7px;font-weight:500;color:#4aabb8}
 .ref-box{margin-top:8px;max-width:75%}
 .ref-note{font-size:.875rem;color:#555;margin-bottom:6px}
-.ref-box a{display:block;font-size:.875rem;color:#337ab7;padding:2px 0}
+.ref-box a{display:flex;align-items:center;gap:6px;font-size:.875rem;color:#337ab7;padding:3px 0}
 .ref-box a:hover{text-decoration:underline}
+.ref-box a .ref-icon{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:4px;font-size:12px;flex-shrink:0}
+.ref-box a .ref-icon.file{background:#e8f4fd;color:#337ab7}
+.ref-box a .ref-icon.article{background:#e8f8e8;color:#3a8a3a}
 .typing-dots{display:inline-flex;gap:5px;padding:14px 18px}
 .typing-dots span{width:8px;height:8px;border-radius:50%;background:#ababab;animation:bounce .6s infinite alternate}
 .typing-dots span:nth-child(2){animation-delay:.2s}
@@ -152,14 +155,14 @@ const scenario=[
     noAnswer:false,
     answer:"F1A車載機の道路区分は、「道路・運行」ボタンを短押しすることで切り替えることができます。ボタンを押すたびに、以下の順序で道路区分が変更されます：\n\n1. 一般道\n2. 市街地\n3. 高速道\n4. 有料道\n\n道路区分が変更されると、音声案内とボタンの色で確認できます。\n※ 確定までの時間は設定画面から変更可能です（デフォルト: 5秒）。",
     suggestions:["道路区分の確定時間を変更するには？","F1A車載機のボタン操作一覧は？","音声案内の設定方法は？"],
-    refs:["DTS-F1A操作マニュアル","車載機設定ガイド"]
+    refs:[{name:"DTS-F1A操作マニュアル.pdf",type:"file"},{name:"車載機設定ガイド",type:"article"}]
   },
   { /* ターン3: 深掘り */
     userQ:"道路区分の確定時間を変更するには？",
     noAnswer:false,
     answer:"道路区分の確定時間は、以下の手順で変更できます：\n\n1. メニューボタンを長押しして設定画面を開く\n2.「道路区分設定」を選択\n3.「確定時間」の項目で秒数を変更（1秒〜30秒）\n4. 決定ボタンを押して保存\n\n推奨設定：\n• 市街地走行が多い場合 → 3秒\n• 高速道路が多い場合 → 5秒（デフォルト）\n• 山間部など道路が頻繁に変わる場合 → 10秒",
     suggestions:["設定の初期化方法は？","他の設定項目にはどんなものがある？","道路区分が正しく認識されない場合は？"],
-    refs:["DTS-F1A操作マニュアル 第5章"]
+    refs:[{name:"DTS-F1A操作マニュアル 第5章.pdf",type:"file"}]
   },
   { /* ターン4: 回答なし → C案UI再表示 */
     userQ:"こねこ便と郵便の使い分けを教えて",
@@ -175,7 +178,7 @@ const scenario=[
     noAnswer:false,
     answer:"こねこ便420では、厚さ3cm以内の荷物を送ることができます。ただし、以下のものは送ることができません：\n\n1. 他の荷物に損害を及ぼすおそれのあるもの\n2. 再発行が困難なもの（例：原稿、フィルムなど）\n3. 航空会社が制限している物品\n4. 国際郵便で送れないもの\n5. 海外あての荷物\n\n料金：全国一律420円（税込）",
     suggestions:[],
-    refs:["こねこ便420利用ガイド","社内配送ルール"]
+    refs:[{name:"こねこ便420利用ガイド.pdf",type:"file"},{name:"社内配送ルール",type:"article"}]
   }
 ];
 
@@ -195,7 +198,7 @@ function addMsg(type,text,refs){
   if(type==='user'){h='<div class="bubble main">'+escHtml(text)+'</div>'}
   else{
     h='<div class="chat-label"><span class="ai-icon-sm"><i class="fa-solid fa-cloud cloud"></i><span class="ai-t">AI</span></span></div><div class="bubble sub">'+escHtml(text)+'</div>';
-    if(refs&&refs.length){h+='<div class="ref-box"><div class="ref-note">こちらの回答は下記のナレッジを参考にしています。</div>';refs.forEach(r=>h+='<a href="#">📄 '+escHtml(r)+'</a>');h+='</div>'}
+    if(refs&&refs.length){h+='<div class="ref-box"><div class="ref-note">こちらの回答は下記のナレッジを参考にしています。</div>';refs.forEach(r=>{const isFile=r.type==='file';const iconClass=isFile?'file':'article';const iconHtml=isFile?'<i class="fa-solid fa-paperclip"></i>':'<i class="fa-solid fa-file-lines"></i>';h+='<a href="#"><span class="ref-icon '+iconClass+'">'+iconHtml+'</span>'+escHtml(r.name)+'</a>'});h+='</div>'}
   }
   d.innerHTML=h;chatArea.appendChild(d);scrollToBottom();return d;
 }
