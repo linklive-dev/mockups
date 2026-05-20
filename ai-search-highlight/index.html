@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ナレカン AI検索ハイライト — モックアップ</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;line-height:1.6;letter-spacing:0.03em;outline:none}
+html,body{background:#fff;color:#555;font-family:'Noto Sans JP','Helvetica Neue',Arial,'Hiragino Kaku Gothic ProN','Hiragino Sans',Meiryo,sans-serif;min-height:100%;overflow-y:hidden}
+a{color:#337ab7;cursor:pointer;text-decoration:none}
+body{display:flex;justify-content:center;align-items:flex-start;min-height:100vh;background:#eee;padding:20px;gap:20px;flex-wrap:wrap}
+
+/* ===== Header ===== */
+.page-header{position:fixed;top:0;left:0;right:0;background:#4aabb8;color:#fff;padding:10px 24px;z-index:100;display:flex;align-items:center;gap:12px;font-size:14px;box-shadow:0 2px 6px rgba(0,0,0,.15)}
+.page-header .badge{background:rgba(255,255,255,.2);padding:2px 10px;border-radius:12px;font-size:11px}
+.page-header .nav-tabs{display:flex;gap:4px;margin-left:auto}
+.page-header .nav-tab{padding:4px 14px;border-radius:4px;cursor:pointer;font-size:12px;transition:.15s;border:1px solid rgba(255,255,255,.3)}
+.page-header .nav-tab:hover{background:rgba(255,255,255,.2)}
+.page-header .nav-tab.active{background:#fff;color:#4aabb8;font-weight:500}
+
+/* ===== Panels ===== */
+.panel{background:#fff;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,.1);overflow:hidden;display:none;flex-direction:column;margin-top:52px}
+.panel.active{display:flex}
+.panel-title{background:#f8f8f8;padding:10px 20px;font-size:13px;font-weight:500;color:#555;border-bottom:1px solid #eee;display:flex;align-items:center;gap:8px}
+.panel-title .icon{color:#4aabb8}
+.panel-title .desc{font-weight:400;color:#999;margin-left:auto;font-size:11px}
+
+/* ===== View 1: Dialog (references only) ===== */
+.dialog-panel{width:1000px;max-width:96vw;height:calc(100vh - 90px)}
+.dialog-body{flex:1;overflow-y:auto;padding:24px 32px}
+
+.chat-msg{margin-bottom:16px;animation:fadeIn .3s ease}
+.chat-msg.user{display:flex;flex-direction:column;align-items:flex-end}
+.chat-msg.ai{display:flex;flex-direction:column;align-items:flex-start}
+.bubble{padding:12px 16px;white-space:pre-wrap;width:fit-content;max-width:75%;font-size:14px;color:#555}
+.bubble.user-bubble{background:#4aabb8;color:#fff;border-radius:10px;border-top-right-radius:0}
+.bubble.ai-bubble{background:#f4f4f4;color:#555;border-radius:0 10px 10px}
+
+.chat-label{font-size:10px;color:#ababab;margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.ai-icon-sm{width:26px;height:26px;position:relative;display:inline-flex;align-items:center;justify-content:center}
+.ai-icon-sm .cloud{font-size:20px;color:#4aabb8}
+.ai-icon-sm .ai-t{position:absolute;bottom:-1px;left:50%;transform:translateX(-50%);font-size:6px;font-weight:500;color:#4aabb8}
+
+/* Highlight mark */
+mark{background:#fff59d;padding:1px 2px;border-radius:2px}
+mark.scroll-target{background:#ffcc02;outline:2px solid #ffcc02;animation:pulseHighlight 1.5s ease 2}
+
+.ref-box{margin-top:10px;max-width:85%}
+.ref-note{font-size:12px;color:#888;margin-bottom:6px}
+.ref-link{display:flex;align-items:center;gap:8px;font-size:13px;color:#337ab7;padding:6px 10px;transition:.15s;border-radius:6px;border:1px solid #eee;margin-bottom:4px}
+.ref-link:hover{background:#f8f8f8;border-color:#ddd}
+.ref-icon{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;font-size:12px;flex-shrink:0}
+.ref-icon.file{background:#e8f4fd;color:#337ab7}
+.ref-icon.article{background:#e8f8e8;color:#3a8a3a}
+.ref-link .arrow{color:#ccc;font-size:10px;margin-left:auto}
+.ref-link .kw-badge{font-size:10px;background:#fff59d;color:#777;padding:1px 6px;border-radius:8px;white-space:nowrap}
+.ref-link .ref-title{flex:1;font-weight:500}
+.ref-link .ref-subtitle{font-size:11px;color:#999;font-weight:400}
+
+/* Highlight tooltip */
+.highlight-hint{background:#fffde7;border:1px solid #fff59d;border-radius:6px;padding:8px 12px;font-size:11px;color:#777;margin-top:8px;display:flex;align-items:center;gap:6px;max-width:85%}
+.highlight-hint i{color:#ffb300;font-size:13px}
+
+/* ===== View 2: Attachment / PDF ===== */
+.pdf-panel{width:1000px;max-width:96vw;height:calc(100vh - 90px)}
+.article-toolbar{display:flex;align-items:center;gap:8px;padding:8px 16px;background:#fafafa;border-bottom:1px solid #eee;font-size:12px;color:#888}
+.article-toolbar .back-btn{background:none;border:1px solid #ddd;border-radius:4px;padding:3px 10px;cursor:pointer;font-size:12px;color:#555;font-family:inherit;display:flex;align-items:center;gap:4px;transition:.15s}
+.article-toolbar .back-btn:hover{background:#f0f0f0}
+.article-toolbar .kw-chips{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap}
+.article-toolbar .kw-chip{background:#fff59d;padding:2px 8px;border-radius:10px;font-size:11px;color:#666}
+.article-toolbar .nav-arrows{display:flex;gap:2px;margin-left:8px}
+.article-toolbar .nav-arrow{background:none;border:1px solid #ddd;border-radius:4px;width:26px;height:26px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;color:#555;transition:.15s}
+.article-toolbar .nav-arrow:hover{background:#f0f0f0}
+.article-toolbar .match-count{font-size:11px;color:#888;white-space:nowrap}
+
+.pdf-viewer{flex:1;background:#666;display:flex;align-items:flex-start;justify-content:center;position:relative;overflow-y:auto;padding:24px 0}
+.pdf-page{background:#fff;width:680px;min-height:900px;box-shadow:0 2px 12px rgba(0,0,0,.3);padding:60px 56px;margin:0 auto}
+.pdf-page h2{font-size:18px;color:#333;margin-bottom:16px}
+.pdf-page p{font-size:13px;color:#555;margin-bottom:12px}
+.pdf-page table{width:100%;border-collapse:collapse;font-size:12px;margin:12px 0}
+.pdf-page th,.pdf-page td{border:1px solid #ccc;padding:6px 10px;text-align:left}
+.pdf-page th{background:#f0f0f0;font-weight:500}
+
+/* ===== View 3: Inline preview (slide-in) ===== */
+.inline-panel{width:1000px;max-width:96vw;height:calc(100vh - 90px)}
+.inline-body{flex:1;display:flex;overflow:hidden}
+.inline-left{width:360px;border-right:1px solid #eee;overflow-y:auto;padding:16px;background:#fafafa;flex-shrink:0}
+.inline-right{flex:1;background:#666;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px 0}
+.inline-right .pdf-page{width:520px;min-height:700px;padding:40px 36px}
+.inline-right .pdf-page h2{font-size:15px}
+.inline-right .pdf-page p{font-size:12px}
+.inline-right .pdf-page table{font-size:11px}
+
+.inline-left .answer-text{font-size:13px;color:#555;line-height:1.7;white-space:pre-wrap;padding:8px 0}
+.inline-left .file-card{display:flex;align-items:center;gap:8px;padding:10px;border:1px solid #ddd;border-radius:6px;background:#fff;margin-bottom:8px;cursor:pointer;transition:.15s}
+.inline-left .file-card:hover{border-color:#4aabb8;background:#f0fafb}
+.inline-left .file-card.active{border-color:#4aabb8;background:#e8f7f9}
+.inline-left .file-card .file-icon{width:32px;height:32px;border-radius:6px;background:#fde8e8;color:#e74c3c;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.inline-left .file-card .file-info{flex:1}
+.inline-left .file-card .file-name{font-size:12px;font-weight:500;color:#333}
+.inline-left .file-card .file-meta{font-size:10px;color:#999}
+.inline-left .section-label{font-size:11px;color:#999;font-weight:500;margin:12px 0 6px;display:flex;align-items:center;gap:4px}
+
+/* ===== Legend ===== */
+.legend{position:fixed;bottom:16px;right:16px;background:#fff;border-radius:8px;padding:12px 16px;box-shadow:0 2px 12px rgba(0,0,0,.15);font-size:11px;color:#777;z-index:50;max-width:280px}
+.legend-title{font-weight:500;color:#555;margin-bottom:6px;font-size:12px}
+.legend-item{display:flex;align-items:center;gap:8px;margin-bottom:3px}
+.legend-color{width:32px;height:14px;border-radius:2px;flex-shrink:0}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulseHighlight{0%,100%{outline-color:#ffcc02}50%{outline-color:#ff9800}}
+.dialog-body::-webkit-scrollbar,.pdf-viewer::-webkit-scrollbar,.inline-left::-webkit-scrollbar,.inline-right::-webkit-scrollbar{width:8px}
+.dialog-body::-webkit-scrollbar-thumb,.pdf-viewer::-webkit-scrollbar-thumb,.inline-left::-webkit-scrollbar-thumb,.inline-right::-webkit-scrollbar-thumb{background:#ccc;border-radius:4px}
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <i class="fa-solid fa-wand-magic-sparkles"></i>
+  <span>AI検索ハイライト モックアップ</span>
+  <span class="badge">synonym_dict.keys + クエリフィルタ（案B）</span>
+  <div class="nav-tabs">
+    <div class="nav-tab active" onclick="showPanel('dialog')">① ダイアログ（参照元リンク）</div>
+    <div class="nav-tab" onclick="showPanel('pdf')">② 添付ファイル（新タブ）</div>
+    <div class="nav-tab" onclick="showPanel('inline')">③ インラインプレビュー</div>
+  </div>
+</div>
+
+<!-- ===== View 1: Dialog — reference links with KW badges ===== -->
+<div class="panel dialog-panel active" id="panel-dialog">
+  <div class="panel-title">
+    <i class="fa-solid fa-comments icon"></i> AI検索ダイアログ — 参照元リンクにKWバッジ表示
+    <span class="desc">参照元クリック → 添付ファイルをKWハイライト付きで開く</span>
+  </div>
+  <div class="dialog-body">
+    <!-- User question -->
+    <div class="chat-msg user">
+      <div class="bubble user-bubble">有給申請の方法を教えてください</div>
+    </div>
+
+    <!-- AI answer -->
+    <div class="chat-msg ai">
+      <div class="chat-label">
+        <span class="ai-icon-sm"><i class="fa-solid fa-cloud cloud"></i><span class="ai-t">AI</span></span>
+      </div>
+      <div class="bubble ai-bubble">有給休暇の申請方法についてご説明します。
+
+1. 社内ポータルサイト「勤怠管理」にログインします
+2. 左メニューの「休暇申請」をクリックします
+3. 「新規申請」ボタンを押し、取得希望日を選択します
+4. 休暇種別で「年次有給休暇」を選び、理由を入力します
+5. 承認者（直属の上長）を確認し、「申請」を押してください
+
+申請後、上長にメール通知が届き、承認されると
+ステータスが「承認済」に変わります。</div>
+
+      <!-- Reference links -->
+      <div class="ref-box">
+        <div class="ref-note">こちらの回答は下記のナレッジを参考にしています。</div>
+        <a class="ref-link" onclick="showPanel('pdf')">
+          <span class="ref-icon file"><i class="fa-solid fa-paperclip"></i></span>
+          <span>
+            <span class="ref-title">有給休暇申請マニュアル.pdf</span><br>
+            <span class="ref-subtitle">📄 人事・総務 フォルダ</span>
+          </span>
+          <span class="kw-badge">有給, 申請, 方法</span>
+          <i class="fa-solid fa-arrow-up-right-from-square arrow"></i>
+        </a>
+        <a class="ref-link" onclick="showPanel('inline')">
+          <span class="ref-icon file"><i class="fa-solid fa-paperclip"></i></span>
+          <span>
+            <span class="ref-title">勤怠管理操作手順書.pdf</span><br>
+            <span class="ref-subtitle">📄 マニュアル フォルダ</span>
+          </span>
+          <span class="kw-badge">有給, 申請</span>
+          <i class="fa-solid fa-arrow-up-right-from-square arrow"></i>
+        </a>
+        <a class="ref-link">
+          <span class="ref-icon article"><i class="fa-solid fa-file-lines"></i></span>
+          <span>
+            <span class="ref-title">就業規則 第23条（休暇）</span><br>
+            <span class="ref-subtitle">📁 社内規程 フォルダ</span>
+          </span>
+          <span class="kw-badge">有給</span>
+          <i class="fa-solid fa-arrow-up-right-from-square arrow"></i>
+        </a>
+      </div>
+
+      <!-- Hint -->
+      <div class="highlight-hint">
+        <i class="fa-solid fa-lightbulb"></i>
+        参照元をクリックすると、該当キーワード箇所が<mark>ハイライト</mark>された状態で開きます
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== View 2: PDF in new tab with highlight ===== -->
+<div class="panel pdf-panel" id="panel-pdf">
+  <div class="panel-title">
+    <i class="fa-solid fa-file-pdf icon" style="color:#e74c3c"></i> 添付ファイル（新タブ）— KWハイライト＆自動スクロール
+    <span class="desc">?type=rag&rag_keywords=有給,申請,方法</span>
+  </div>
+  <div class="article-toolbar">
+    <button class="back-btn" onclick="showPanel('dialog')"><i class="fa-solid fa-arrow-left"></i> 戻る</button>
+    <span class="match-count">3件のキーワードがヒット</span>
+    <div class="kw-chips">
+      <span class="kw-chip">有給</span>
+      <span class="kw-chip">申請</span>
+      <span class="kw-chip">方法</span>
+    </div>
+    <div class="nav-arrows">
+      <button class="nav-arrow" title="前"><i class="fa-solid fa-chevron-up"></i></button>
+      <button class="nav-arrow" title="次"><i class="fa-solid fa-chevron-down"></i></button>
+    </div>
+  </div>
+  <div class="pdf-viewer" id="pdfViewer">
+    <div class="pdf-page">
+      <h2>有給休暇<mark>申請</mark>マニュアル</h2>
+      <p>本マニュアルは、社員の<mark>有給</mark>休暇<mark>申請</mark>手続きについて定めたものです。</p>
+
+      <h2 style="font-size:15px;margin-top:24px">1. <mark>申請</mark>手順</h2>
+      <p>以下の手順（<mark>方法</mark>）に従って<mark>有給</mark>休暇を<mark>申請</mark>してください。</p>
+      <table>
+        <tr><th>ステップ</th><th>操作内容</th></tr>
+        <tr><td>1</td><td>勤怠管理システムにログイン</td></tr>
+        <tr><td>2</td><td>「休暇<mark>申請</mark>」メニューを選択</td></tr>
+        <tr><td>3</td><td>取得日・種別を入力</td></tr>
+        <tr><td>4</td><td>「<mark>申請</mark>」ボタンをクリック</td></tr>
+      </table>
+
+      <h2 style="font-size:15px;margin-top:24px">2. <mark class="scroll-target">有給</mark>休暇の付与日数</h2>
+      <table>
+        <tr><th>勤続年数</th><th>付与日数</th></tr>
+        <tr><td>6ヶ月</td><td>10日</td></tr>
+        <tr><td>1年6ヶ月</td><td>11日</td></tr>
+        <tr><td>2年6ヶ月</td><td>12日</td></tr>
+        <tr><td>3年6ヶ月</td><td>14日</td></tr>
+        <tr><td>6年6ヶ月以上</td><td>20日</td></tr>
+      </table>
+
+      <h2 style="font-size:15px;margin-top:24px">3. <mark>申請</mark>期限</h2>
+      <p>原則として取得希望日の3営業日前までに<mark>申請</mark>してください。急な体調不良等の場合は、上長へ電話連絡のうえ事後<mark>申請</mark>が可能です（取得日から3営業日以内）。</p>
+
+      <h2 style="font-size:15px;margin-top:24px">4. 注意事項</h2>
+      <p>・<mark>有給</mark>休暇の有効期限は付与日から2年間です。<br>・繰越は最大20日までです。<br>・半日<mark>有給</mark>は0.5日として計算されます。</p>
+    </div>
+  </div>
+</div>
+
+<!-- ===== View 3: Inline attachment preview ===== -->
+<div class="panel inline-panel" id="panel-inline">
+  <div class="panel-title">
+    <i class="fa-solid fa-columns icon"></i> インラインプレビュー — ダイアログ内から直接プレビュー
+    <span class="desc">添付ファイルをダイアログ内で展開しハイライト表示</span>
+  </div>
+  <div class="inline-body">
+    <!-- Left: chat context -->
+    <div class="inline-left">
+      <div class="section-label"><i class="fa-solid fa-message"></i> 質問</div>
+      <div style="background:#4aabb8;color:#fff;padding:8px 12px;border-radius:8px;font-size:13px;margin-bottom:12px">有給申請の方法を教えてください</div>
+
+      <div class="section-label"><i class="fa-solid fa-robot"></i> AI回答</div>
+      <div class="answer-text">有給休暇の申請方法について説明します。
+1. 勤怠管理にログイン
+2. 休暇申請をクリック
+3. 新規申請から取得日を選択
+4. 年次有給休暇を選択
+5. 申請を押してください</div>
+
+      <div class="section-label"><i class="fa-solid fa-paperclip"></i> 参照元ファイル</div>
+      <div class="file-card active">
+        <div class="file-icon"><i class="fa-solid fa-file-pdf"></i></div>
+        <div class="file-info">
+          <div class="file-name">有給休暇申請マニュアル.pdf</div>
+          <div class="file-meta">PDF • 2ページ • <mark style="font-size:10px">有給, 申請, 方法</mark></div>
+        </div>
+      </div>
+      <div class="file-card">
+        <div class="file-icon"><i class="fa-solid fa-file-pdf"></i></div>
+        <div class="file-info">
+          <div class="file-name">勤怠管理操作手順書.pdf</div>
+          <div class="file-meta">PDF • 5ページ</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: PDF preview with highlights -->
+    <div class="inline-right" id="inlineViewer">
+      <div class="pdf-page">
+        <h2><mark>有給</mark>休暇<mark>申請</mark>マニュアル</h2>
+        <p>本マニュアルは、社員の<mark>有給</mark>休暇<mark>申請</mark>手続きについて定めたものです。</p>
+
+        <h2 style="font-size:14px;margin-top:20px">1. <mark>申請</mark>手順（<mark>方法</mark>）</h2>
+        <table>
+          <tr><th>ステップ</th><th>操作内容</th></tr>
+          <tr><td>1</td><td>勤怠管理システムにログイン</td></tr>
+          <tr><td>2</td><td>「休暇<mark>申請</mark>」メニューを選択</td></tr>
+          <tr><td>3</td><td>取得日・種別を入力</td></tr>
+          <tr><td>4</td><td>「<mark>申請</mark>」ボタンをクリック</td></tr>
+        </table>
+
+        <h2 style="font-size:14px;margin-top:20px">2. <mark class="scroll-target">有給</mark>休暇の付与日数</h2>
+        <table>
+          <tr><th>勤続年数</th><th>付与日数</th></tr>
+          <tr><td>6ヶ月</td><td>10日</td></tr>
+          <tr><td>1年6ヶ月</td><td>11日</td></tr>
+          <tr><td>2年6ヶ月</td><td>12日</td></tr>
+          <tr><td>3年6ヶ月</td><td>14日</td></tr>
+          <tr><td>6年6ヶ月以上</td><td>20日</td></tr>
+        </table>
+
+        <h2 style="font-size:14px;margin-top:20px">3. 注意事項</h2>
+        <p>・<mark>有給</mark>休暇の有効期限は付与日から2年間です。<br>・半日<mark>有給</mark>は0.5日として計算されます。</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Legend -->
+<div class="legend">
+  <div class="legend-title"><i class="fa-solid fa-info-circle"></i> ハイライト仕様</div>
+  <div class="legend-item"><div class="legend-color" style="background:#fff59d"></div> キーワードハイライト</div>
+  <div class="legend-item"><div class="legend-color" style="background:#ffcc02;outline:2px solid #ff9800"></div> スクロール先（最初のHIT箇所）</div>
+  <div style="margin-top:6px;font-size:10px;color:#aaa">KW抽出元: synonym_dict.keys<br>フィルタ: クエリ部分一致（案B）</div>
+</div>
+
+<script>
+function showPanel(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  const tabs = document.querySelectorAll('.nav-tab');
+  if (name === 'dialog') tabs[0].classList.add('active');
+  if (name === 'pdf') tabs[1].classList.add('active');
+  if (name === 'inline') tabs[2].classList.add('active');
+
+  if (name === 'pdf') {
+    setTimeout(() => {
+      const target = document.querySelector('#pdfViewer .scroll-target');
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 400);
+  }
+}
+</script>
+</body>
+</html>
